@@ -26,7 +26,7 @@ import {
 } from "@/components/sequence/frame-grid"
 import { BLEED_MM, DEFAULT_TEXT_COLOR } from "@/components/shell/inspector-panel"
 import { editAtEnd, selectableTextboxClass } from "@/components/sequence/selectable-textbox"
-import { hasOpenPopup, isTypingTarget } from "@/components/sequence/use-canvas-shortcuts"
+import { hasOpenPopup, isKeyboardEvent, isTypingTarget } from "@/components/sequence/use-canvas-shortcuts"
 import { DEFAULT_TEXT_FONT, resolveTextFontFamily } from "@/lib/fonts"
 import { thumbnailUrl } from "@/lib/storage/assets"
 
@@ -556,6 +556,7 @@ export function useFabricCanvas(options: Options) {
        meaning. While editing, Enter belongs to Fabric's textarea and stays a
        newline. */
     const onCanvasKey = (event: KeyboardEvent) => {
+      if (!isKeyboardEvent(event)) return
       if (event.key === "Escape" && placingTextRef.current) {
         event.preventDefault()
         disarmTextPlacement()
@@ -655,6 +656,7 @@ export function useFabricCanvas(options: Options) {
     }
 
     const onSpaceKeyDown = (event: KeyboardEvent) => {
+      if (!isKeyboardEvent(event)) return
       if (event.code !== "Space") return
       if (spacePressed) {
         event.preventDefault() // Auto-repeat while held; its default scrolls.
@@ -685,6 +687,7 @@ export function useFabricCanvas(options: Options) {
     }
 
     const onSpaceKeyUp = (event: KeyboardEvent) => {
+      if (!isKeyboardEvent(event)) return
       if (event.code !== "Space" || !spacePressed) return
       spacePressed = false
       const target_canvas = canvasRef.current

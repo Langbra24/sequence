@@ -29,6 +29,7 @@ export function useCanvasShortcuts({ enabled, zoomIn, zoomOut, resetZoom }: Opti
     if (!enabled) return
 
     const onKeyDown = (event: KeyboardEvent) => {
+      if (!isKeyboardEvent(event)) return
       if (!event.ctrlKey && !event.metaKey) return
 
       // `=` matters as much as `+`: on most layouts the unshifted key reports
@@ -55,6 +56,15 @@ export function useCanvasShortcuts({ enabled, zoomIn, zoomOut, resetZoom }: Opti
   }, [enabled, zoomIn, zoomOut, resetZoom])
 
   return canIntercept
+}
+
+/**
+ * Chrome's autofill and some extensions dispatch "keydown"/"keyup" as a plain
+ * `Event`, with no `key`, modifiers or `getModifierState`. Every window-level
+ * key listener returns early on one before reading anything from it.
+ */
+export function isKeyboardEvent(event: Event): event is KeyboardEvent {
+  return event instanceof KeyboardEvent
 }
 
 /** Exported for use-fabric-canvas.ts's own window-level key listeners
@@ -188,6 +198,7 @@ export function useFrameKeyboardShortcuts({
     if (!enabled) return
 
     const onKeyDown = (event: KeyboardEvent) => {
+      if (!isKeyboardEvent(event)) return
       // The brackets and Ctrl/Cmd+Arrow are both keys text editing relies on,
       // so none of this applies while focus is in an input, textarea, select,
       // or editable region (`handleFrameKeyDown` checks the flag).
@@ -261,6 +272,7 @@ export function useTextToolShortcut({ enabled, isTextboxEditing, armTextTool }: 
     if (!enabled) return
 
     const onKeyDown = (event: KeyboardEvent) => {
+      if (!isKeyboardEvent(event)) return
       const shouldArm = shouldCreateTextbox({
         key: event.key,
         hasModifier: event.ctrlKey || event.metaKey || event.altKey,
@@ -347,6 +359,7 @@ export function useEscapeSelection({
     if (!enabled) return
 
     const onKeyDown = (event: KeyboardEvent) => {
+      if (!isKeyboardEvent(event)) return
       if (event.key !== "Escape" || event.defaultPrevented) return
       if (isTypingTarget(event.target) || isTextEditing() || isTextToolArmed() || hasOpenPopup()) return
 
@@ -380,6 +393,7 @@ export function useCopyPasteShortcut({ enabled, copySelectedFrame, pasteFrame }:
     if (!enabled) return
 
     const onKeyDown = (event: KeyboardEvent) => {
+      if (!isKeyboardEvent(event)) return
       if (!event.ctrlKey && !event.metaKey) return
       if (isTypingTarget(event.target)) return
 
@@ -420,6 +434,7 @@ export function useUndoShortcut({ enabled, undo, redo }: UndoShortcutOptions): v
     if (!enabled) return
 
     const onKeyDown = (event: KeyboardEvent) => {
+      if (!isKeyboardEvent(event)) return
       if (!event.ctrlKey && !event.metaKey) return
       if (isTypingTarget(event.target)) return
 
@@ -505,6 +520,7 @@ export function useDeleteSelectionShortcut({
     if (!enabled) return
 
     const onKeyDown = (event: KeyboardEvent) => {
+      if (!isKeyboardEvent(event)) return
       if (event.key !== "Backspace" && event.key !== "Delete") return
       if (isTypingTarget(event.target)) return
       if (isTextEditing()) return

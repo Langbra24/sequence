@@ -97,8 +97,9 @@ export function FeedbackControl() {
     } catch (error) {
       // Already surfaced as the error toast above — swallowed here so the
       // popover stays open with the draft intact for a retry, rather than
-      // an unhandled rejection.
-      console.error("Failed to submit feedback:", error)
+      // an unhandled rejection. A failure the route explained is expected
+      // (no token, rate limit), so only an unexplained one is logged.
+      if (!(error instanceof FeedbackError)) console.error("Failed to submit feedback:", error)
     } finally {
       setSubmitting(false)
     }
