@@ -73,6 +73,7 @@ Most published examples are v5/v6 and will not work as written.
 - `setWidth()`/`setHeight()` are gone — use `setDimensions()`. The panel-collapse resize path depends on this.
 - `originX`/`originY` default to `'center'`.
 - `fireRightClick` and `stopContextMenu` default to `true`, but set them explicitly — the context menu depends on them entirely.
+- `strokeUniform` cancels an object's own scale, **not the canvas zoom**: a 2-unit stroke still draws 2 × zoom px. Anything that must stay a fixed screen width (the print guides) sets `strokeWidth`/`strokeDashArray` divided by the zoom in `before:render` (`fitGuideToZoom`).
 - The canvas must observe a dedicated `overflow-hidden` wrapper, never a scrollable ancestor, or a growing canvas summons a scrollbar and re-fires its own `ResizeObserver`.
 
 ## Stack notes
@@ -171,6 +172,9 @@ npm run verify:synthetic-keys # build; plain Events named keydown/keyup (Chrome
 npm run verify:tabs  # build; Canvas/Book, alignment and RGB/CMYK tabs share one
                      #   bordered track (radius 6, padding 2); the selected tab
                      #   (radius 4) sits 2px from it on every side
+npm run verify:print-guides # build with test hooks; every preset and a custom
+                     #   Letter: each page has its red bleed (+3mm) and blue margin
+                     #   guide, 2px with 6/5px dashes on screen at fit and at 100%
 ```
 
 Verifiers live in `scripts/verify/` and drive the real production build with Playwright (pinned to 1.56.1 to match the cloud image's Chromium; locally run `npx playwright install chromium` once). `npm run e2e` drives the real Export dialog; its header comment states the contract the PDF must meet. Set `SEQUENCE_URL=http://localhost:3000` to point a verifier at an already-running server. `verify:text-selection` reads `window.__sequenceCanvas`, which exists only in a build made with `SEQUENCE_TEST_HOOKS=1` (inlined via `next.config.ts`; ordinary builds compile it out).

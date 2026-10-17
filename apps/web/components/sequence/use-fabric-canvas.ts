@@ -179,6 +179,25 @@ type ScreenChrome = FabricObject & {
   screenAnchor: { x: number; y: number; offsetX: number; offsetY: number; scale: number }
 }
 
+/**
+ * The print guides' stroke on screen. Fabric's `strokeUniform` only cancels
+ * an object's own scale, not the canvas zoom, so a plain 2-unit stroke drew
+ * 2 × zoom pixels: about 0.2px at fit-to-view, a pale, near-invisible line,
+ * and worst on large pages (12×12 in fits at the lowest zoom). The stroke
+ * and dashes are divided by the zoom instead, on every render.
+ */
+const GUIDE_STROKE_PX = 2
+const GUIDE_DASH_PX = [6, 5] as const
+
+function guideStrokeAt(zoom: number) {
+  return { strokeWidth: GUIDE_STROKE_PX / zoom, strokeDashArray: GUIDE_DASH_PX.map((n) => n / zoom) }
+}
+
+function fitGuideToZoom(object: FabricObject, zoom: number) {
+  if (object.strokeWidth * zoom === GUIDE_STROKE_PX) return
+  object.set(guideStrokeAt(zoom))
+}
+
 /** Re-sizes and re-positions one piece of `ScreenChrome` for `zoom`.
  *  `setCoords` keeps hover/click hit-testing on what's drawn. */
 function fitChromeToZoom(object: ScreenChrome, zoom: number) {
@@ -782,6 +801,10 @@ export function useFabricCanvas(options: Options) {
           fitChromeToZoom(buttons.right, zoom)
         }
         for (const badge of coverBadgesRef.current.values()) fitChromeToZoom(badge, zoom)
+        for (const overlay of overlaysRef.current.values()) {
+          fitGuideToZoom(overlay.bleed, zoom)
+          fitGuideToZoom(overlay.margin, zoom)
+        }
       })
 
       /**
@@ -1760,14 +1783,13 @@ export function useFabricCanvas(options: Options) {
         originX: "center" as const,
         originY: "center" as const,
         fill: "transparent",
-        strokeDashArray: [6, 5],
-        strokeWidth: 2,
-        // Keep the stroke a constant 2 *screen* pixels regardless of zoom —
-        // without this, `strokeWidth` scales with the canvas's own zoom like
-        // any other geometry, so zooming out shrinks it to sub-pixel and it
-        // effectively disappears (the reported "dotted lines disappear when
-        // I zoom" bug).
-        strokeUniform: true,
+        // Stroke width and dashes are set per zoom by `fitGuideToZoom` (the
+        // canvas's before:render), so they stay GUIDE_STROKE_PX/GUIDE_DASH_PX
+        // on screen at any zoom and any page size.
+        ...guideStrokeAt(canvas.getZoom()),
+        // Redrawn at a new stroke on every zoom, so a per-object cache would
+        // only be thrown away; drawing directly also keeps the dashes crisp.
+        objectCaching: false,
         selectable: false,
         evented: false,
         excludeFromExport: true,
