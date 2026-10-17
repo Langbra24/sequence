@@ -6,7 +6,6 @@ import { Popover } from "@base-ui/react/popover"
 
 import { Button } from "@/components/ui/button"
 import { useToastManager } from "@/components/ui/toast"
-import { modifierLabel, usePlatform } from "@/components/sequence/use-platform"
 import { cn, stagger } from "@/lib/utils"
 import { FEEDBACK_MAX_LENGTH } from "@/lib/feedback-url"
 
@@ -49,8 +48,8 @@ import { FEEDBACK_MAX_LENGTH } from "@/lib/feedback-url"
  * delay rather than popping in together.
  *
  * Cmd/Ctrl+Enter in the textarea submits through the same `handleSubmit`
- * (#56); the Submit button names the shortcut in a `<kbd>`, as the canvas
- * toolbars' tooltips do.
+ * (#56). The button doesn't advertise it: the maintainer wanted the label to
+ * read just "Submit feedback".
  */
 export function FeedbackControl() {
   const [open, setOpen] = useState(false)
@@ -58,8 +57,6 @@ export function FeedbackControl() {
   const [text, setText] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const toastManager = useToastManager()
-  const modifier = modifierLabel(usePlatform())
-  const submitShortcut = modifier ? `${modifier} ↵` : null
 
   const canSubmit = text.trim().length > 0 && text.length <= FEEDBACK_MAX_LENGTH && !submitting
 
@@ -172,14 +169,7 @@ export function FeedbackControl() {
                   sending instead of shrinking (#56). */}
               <Button size="sm" disabled={!canSubmit} onClick={handleSubmit}>
                 <span className="grid justify-items-center">
-                  <span className={cn("col-start-1 row-start-1 flex items-center gap-1.5", submitting && "invisible")}>
-                    Submit feedback
-                    {submitShortcut && (
-                      <kbd data-slot="kbd" aria-hidden className="rounded bg-background/20 px-1 font-sans">
-                        {submitShortcut}
-                      </kbd>
-                    )}
-                  </span>
+                  <span className={cn("col-start-1 row-start-1", submitting && "invisible")}>Submit feedback</span>
                   <span className={cn("col-start-1 row-start-1", !submitting && "invisible")}>Sending…</span>
                 </span>
               </Button>

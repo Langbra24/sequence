@@ -46,7 +46,6 @@ export function NumberField({
   min,
   max,
   unit,
-  align = "right",
   labelledBy,
 }: {
   value: number
@@ -55,11 +54,8 @@ export function NumberField({
   min?: number
   max?: number
   unit?: string
-  /** Where the number sits in the box. Right by default; the page sidebar's
-   *  margin fields left-align (issue #40). */
-  align?: "left" | "right"
   /** Id of a visible label elsewhere, for a field with no wrapping
-   *  `<label>` (the text sidebar's Width, #50). */
+   *  `<label>` (#50). */
   labelledBy?: string
 }) {
   const clamp = (next: number) => {
@@ -85,8 +81,8 @@ export function NumberField({
           onChange(clamp(next))
         }}
         className={cn(
-          "min-w-0 flex-1 bg-transparent text-xs tabular-nums text-foreground outline-none",
-          align === "left" ? "text-left" : "text-right",
+          // Left-aligned everywhere: page margins (#40) and image position.
+          "min-w-0 flex-1 bg-transparent text-left text-xs tabular-nums text-foreground outline-none",
           "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
         )}
       />

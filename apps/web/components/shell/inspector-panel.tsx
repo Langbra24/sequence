@@ -347,7 +347,7 @@ function MarginField({
   return (
     <label className="flex items-center justify-between gap-3 py-0.5 text-sm">
       <span className="text-foreground">{label}</span>
-      <NumberField value={value} step={0.1} onChange={onChange} align="left" />
+      <NumberField value={value} step={0.1} onChange={onChange} />
     </label>
   )
 }
@@ -511,10 +511,10 @@ function ImageElementSettings({ frameId, elementId }: { frameId: string; element
       </Section>
       <Separator />
       <Section title="Position">
-        {/* 12px between fields: a hovered field's stepper targets reach 11px
-            past its edge (number-field.tsx), and must stop short of the
-            next field. */}
-        <div className="flex flex-col gap-2">
+        {/* Same 16px rhythm as the page's Margins. It also clears the 11px a
+            hovered field's stepper targets reach past its edge
+            (number-field.tsx), so they stop short of the next field. */}
+        <div className="flex flex-col gap-4">
           <PercentField label="X" value={element.frame.x} onChange={(x) => updateElementBox(frameId, elementId, { x })} />
           <PercentField label="Y" value={element.frame.y} onChange={(y) => updateElementBox(frameId, elementId, { y })} />
           <PercentField
