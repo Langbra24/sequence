@@ -8,6 +8,10 @@
 // every horizontal separator's left edge is the panel's left edge after its
 // border and its right edge is the panel's right edge, within 1px; and the
 // panel never scrolls sideways.
+//
+// It also checks the inspector's number fields read the same everywhere: in
+// each state every number is left-aligned, and it starts the same distance
+// from its field's edge as every other one (page margins and image X/Y/W/H).
 
 import path from "node:path"
 
@@ -59,7 +63,22 @@ const verifyState = async (name, ready) => {
       (off.length ? `; ${off.length} don't, first ${off[0].left}–${off[0].right}` : ""),
   )
   check(!sideScroll, `${name}: no horizontal scroll`)
+
+  const fields = await page.evaluate(() => {
+    const panel = [...document.querySelectorAll("aside")].at(-1)
+    return [...panel.querySelectorAll('input[type="number"]')].map((input) => ({
+      label: input.closest("label")?.querySelector("span")?.textContent ?? "?",
+      align: getComputedStyle(input).textAlign,
+      inset: Math.round((input.getBoundingClientRect().left - input.parentElement.getBoundingClientRect().left) * 100) / 100,
+    }))
+  })
+  if (fields.length > 0) {
+    const notLeft = fields.filter((f) => f.align !== "left" && f.align !== "start")
+    check(notLeft.length === 0, `${name}: number fields left-aligned (${fields.map((f) => `${f.label} ${f.align}`).join(", ")})`)
+    fields.forEach((f) => numberInsets.add(f.inset))
+  }
 }
+const numberInsets = new Set()
 
 try {
   await dismissIntroduction(page)
@@ -78,6 +97,7 @@ try {
   await placeTextOnFirstPage(page)
   await verifyState("text selected", "Text")
 
+  check(numberInsets.size === 1, `every number field starts the same distance in (${[...numberInsets].join(", ")}px)`)
   check(errors.length === 0, `no uncaught page errors${errors.length ? `: ${errors.join("; ")}` : ""}`)
 } catch (error) {
   failures.push(error.message)

@@ -181,9 +181,11 @@ try {
     await dismissIntroduction(page)
     await page.getByRole("button", { name: "Provide feedback" }).click()
     const textarea = page.getByPlaceholder(PLACEHOLDER)
-    await page.getByRole("button", { name: "Submit feedback" }).locator("kbd").waitFor()
-    const hint = await page.getByRole("button", { name: "Submit feedback" }).locator("kbd").textContent()
-    check(/^(⌘|Ctrl) ↵$/.test(hint), `Submit button shows the shortcut hint "${hint}"`)
+    const submit = page.getByRole("button", { name: "Submit feedback" })
+    await submit.waitFor()
+    // innerText skips the invisible "Sending…" that reserves the busy width.
+    const label = (await submit.evaluate((el) => el.innerText)).trim()
+    check(label === "Submit feedback" && (await submit.locator("kbd").count()) === 0, `Submit button reads just "${label}", no shortcut badge`)
 
     const before = issues
     await textarea.fill("")
