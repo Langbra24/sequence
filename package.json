@@ -43,7 +43,8 @@
     "verify:polish": "npm run build && node scripts/verify/polish.mjs",
     "verify:storage-migration": "npm run build && node scripts/verify/storage-migration.mjs",
     "verify:synthetic-keys": "npm run build && node scripts/verify/synthetic-keys.mjs",
-    "verify:tabs": "npm run build && node scripts/verify/tabs.mjs"
+    "verify:tabs": "npm run build && node scripts/verify/tabs.mjs",
+    "verify:print-guides": "SEQUENCE_TEST_HOOKS=1 npm run build && node scripts/verify/print-guides.mjs"
   },
   "devDependencies": {
     "pdf-lib": "^1.17.1",
