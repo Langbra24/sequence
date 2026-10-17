@@ -152,7 +152,7 @@ function PanelViewSwitcher({
       onValueChange={(value) => onChange(value as PanelView)}
       className="shrink-0 border-b px-2 py-1.5"
     >
-      <TabsList aria-label="Left panel view" className="gap-1">
+      <TabsList aria-label="Left panel view">
         <TabsIndicator />
         <TabsTab value="canvas">Canvas</TabsTab>
         <TabsTab value="book">Book</TabsTab>

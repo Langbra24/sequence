@@ -138,14 +138,10 @@ export function ColorField({
         <Popover.Positioner side="left" align="end" sideOffset={8}>
           <Popover.Popup className="z-50 flex w-[290px] origin-(--transform-origin) flex-col gap-2 rounded-lg border bg-popover p-2 text-popover-foreground shadow-lg outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95">
             <Tabs value={mode} onValueChange={(next) => setMode(next as ColorInputMode)}>
-              <TabsList aria-label="Color input mode" className="gap-1 rounded-md bg-input/70 p-[3px]">
-                <TabsIndicator className="rounded-sm" />
-                <TabsTab value="rgb" className="rounded-sm">
-                  RGB
-                </TabsTab>
-                <TabsTab value="cmyk" className="rounded-sm">
-                  CMYK
-                </TabsTab>
+              <TabsList aria-label="Color input mode">
+                <TabsIndicator />
+                <TabsTab value="rgb">RGB</TabsTab>
+                <TabsTab value="cmyk">CMYK</TabsTab>
               </TabsList>
             </Tabs>
 
