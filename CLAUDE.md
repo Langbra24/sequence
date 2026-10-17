@@ -166,6 +166,8 @@ npm run verify:polish # build; Export/Import buttons keep one width while busy,
 npm run verify:storage-migration # build; a project saved under the pre-rename
                      #   IndexedDB name "loupe" reopens intact under "sequence",
                      #   and the old database is deleted
+npm run verify:synthetic-keys # build; plain Events named keydown/keyup (Chrome
+                     #   autofill, extensions) never throw; a real T still works
 ```
 
 Verifiers live in `scripts/verify/` and drive the real production build with Playwright (pinned to 1.56.1 to match the cloud image's Chromium; locally run `npx playwright install chromium` once). `npm run e2e` drives the real Export dialog; its header comment states the contract the PDF must meet. Set `SEQUENCE_URL=http://localhost:3000` to point a verifier at an already-running server. `verify:text-selection` reads `window.__sequenceCanvas`, which exists only in a build made with `SEQUENCE_TEST_HOOKS=1` (inlined via `next.config.ts`; ordinary builds compile it out).

@@ -10,6 +10,7 @@ import { ImportPhotosButton } from "@/components/sequence/import-photos"
 import { CanvasControls } from "@/components/sequence/canvas-controls"
 import { useFabricCanvas } from "@/components/sequence/use-fabric-canvas"
 import {
+  isKeyboardEvent,
   useCopyPasteShortcut,
   useDeleteSelectionShortcut,
   useEscapeSelection,
@@ -312,6 +313,7 @@ function ImagePresetMenu({
 }) {
   useEffect(() => {
     const dismiss = (event: KeyboardEvent) => {
+      if (!isKeyboardEvent(event)) return
       if (event.key !== "Escape") return
       event.preventDefault()
       onDismiss()
@@ -376,6 +378,7 @@ function EmptyCanvasContextMenu({
 }) {
   useEffect(() => {
     const dismiss = (event: KeyboardEvent) => {
+      if (!isKeyboardEvent(event)) return
       if (event.key !== "Escape") return
       event.preventDefault()
       onDismiss()
@@ -425,6 +428,7 @@ function FrameContextMenu({
 }) {
   useEffect(() => {
     const dismiss = (event: KeyboardEvent) => {
+      if (!isKeyboardEvent(event)) return
       if (event.key !== "Escape") return
       event.preventDefault()
       onDismiss()
