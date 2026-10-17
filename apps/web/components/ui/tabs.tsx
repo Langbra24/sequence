@@ -20,12 +20,12 @@ import { cn } from "@/lib/utils"
  * equal-width (`flex-1`), so it never actually changes between them.
  *
  * Every tab list is the same bordered track (Paper F0-0, first built for the
- * text sidebar's alignment tabs): a 1px `border`, `bg-input/30`, 2px padding.
- * The indicator and tabs take the track's radius minus that border and
- * padding (`TAB_RADIUS`), so the inner corners sit concentric with the outer
- * ones instead of bulging against them. Callers don't restyle the track.
+ * text sidebar's alignment tabs): a 1px `border`, `bg-input/30`, a 6px
+ * radius and 2px padding, with a 4px radius on the indicator and tabs — the
+ * maintainer's spec, checked by `npm run verify:tabs`. Callers don't restyle
+ * the track.
  */
-const TAB_RADIUS = "rounded-[calc(var(--radius-md)-3px)]"
+const TAB_RADIUS = "rounded-[4px]"
 
 function Tabs({ className, ...props }: TabsPrimitive.Root.Props) {
   return (
@@ -41,7 +41,7 @@ function TabsList({ className, ...props }: TabsPrimitive.List.Props) {
   return (
     <TabsPrimitive.List
       data-slot="tabs-list"
-      className={cn("relative flex gap-1 rounded-md border bg-input/30 p-0.5", className)}
+      className={cn("relative flex gap-1 rounded-[6px] border bg-input/30 p-0.5", className)}
       {...props}
     />
   )
