@@ -169,8 +169,8 @@ npm run verify:storage-migration # build; a project saved under the pre-rename
 npm run verify:synthetic-keys # build; plain Events named keydown/keyup (Chrome
                      #   autofill, extensions) never throw; a real T still works
 npm run verify:tabs  # build; Canvas/Book, alignment and RGB/CMYK tabs share one
-                     #   bordered track; the indicator sits an even padding from
-                     #   it on every side, with concentric corners
+                     #   bordered track (radius 6, padding 2); the selected tab
+                     #   (radius 4) sits 2px from it on every side
 ```
 
 Verifiers live in `scripts/verify/` and drive the real production build with Playwright (pinned to 1.56.1 to match the cloud image's Chromium; locally run `npx playwright install chromium` once). `npm run e2e` drives the real Export dialog; its header comment states the contract the PDF must meet. Set `SEQUENCE_URL=http://localhost:3000` to point a verifier at an already-running server. `verify:text-selection` reads `window.__sequenceCanvas`, which exists only in a build made with `SEQUENCE_TEST_HOOKS=1` (inlined via `next.config.ts`; ordinary builds compile it out).

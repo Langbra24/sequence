@@ -9,8 +9,8 @@
 //      first tab's left, the last tab's right, top and bottom). Before
 //      `left: 0` on `.tabs-indicator-rail`, the padding was counted twice:
 //      the first tab sat 2x in and the last one touched the border;
-//   3. the indicator's corners are concentric: the track's radius minus its
-//      border and padding.
+//   3. the maintainer's spec: track radius 6px, indicator radius 4px,
+//      padding 2px.
 
 import { startApp } from "./lib/server.mjs"
 import { dismissIntroduction, importPhotos, openApp, placeTextOnFirstPage, settle, setupBook } from "./lib/app.mjs"
@@ -75,8 +75,8 @@ async function checkList(listName, tabNames, scope = page) {
         `(left ${m.gap.left.toFixed(2)}, right ${m.gap.right.toFixed(2)}, top ${m.gap.top.toFixed(2)}, bottom ${m.gap.bottom.toFixed(2)})`,
     )
     check(
-      near(m.indicatorRadius, m.listRadius - 1 - m.padding),
-      `${label}: concentric corners (indicator ${m.indicatorRadius}px = track ${m.listRadius}px − 1px border − ${m.padding}px padding)`,
+      m.listRadius === 6 && m.indicatorRadius === 4 && m.padding === 2,
+      `${label}: track radius ${m.listRadius}px (6), selected-tab radius ${m.indicatorRadius}px (4), padding ${m.padding}px (2)`,
     )
   }
 }
