@@ -176,10 +176,9 @@ try {
   await measure(page, "top nav Export", banner.getByRole("button", { name: "Export" }), ["Shift+Tab", "Tab"])
   await measure(page, "layers rename button", layers.locator('button[title="Rename book"]'))
 
-  // A text box gives the inspector a select trigger and a NumberField.
+  // A text box gives the inspector a select trigger.
   await placeTextOnFirstPage(page)
   await measure(page, "inspector select trigger", inspector.getByRole("combobox").first())
-  await measure(page, "inspector NumberField", inspector.getByRole("spinbutton").first(), ["Shift+Tab", "Tab"])
 
   await inspector.getByRole("button", { name: /^Color #[0-9a-f]{6}$/i }).click()
   const popover = page.getByRole("tablist", { name: "Color input mode" }).locator("xpath=ancestor::*[@data-open][1]")
@@ -190,6 +189,14 @@ try {
   await measure(page, "popover R channel", popover.getByRole("spinbutton").first(), ["Shift+Tab", "Tab"])
   await page.keyboard.press("Escape")
   await popover.waitFor({ state: "hidden" })
+
+  // A page's margins are NumberFields; its row is on the Book tab.
+  await page.getByRole("tab", { name: "Book" }).click()
+  await layers.getByRole("button", { name: "Page 1", exact: true }).click()
+  const marginField = inspector.getByRole("spinbutton").first()
+  await marginField.waitFor()
+  await measure(page, "inspector NumberField", marginField, ["Shift+Tab", "Tab"])
+  await page.getByRole("tab", { name: "Canvas" }).click()
 
   await banner.getByRole("button", { name: "Export" }).click()
   const exportDialog = page.getByRole("dialog", { name: "Export book" })
