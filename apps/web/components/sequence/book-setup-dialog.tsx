@@ -12,7 +12,7 @@ const DEFAULT_PAGE_COUNT = 12
 /** One field style for all three inputs — the page-count field's, from the
  *  Paper reference (FL-0) — so the custom size reads as part of the same form. */
 const FIELD_CLASS =
-  "h-7 w-20 rounded-md border bg-input/30 px-2 text-right font-mono text-xs text-foreground outline-none transition-colors focus-ring aria-invalid:border-destructive"
+  "h-7 w-20 rounded-md border bg-input/30 px-2 text-right text-xs tabular-nums text-foreground outline-none transition-colors focus-ring aria-invalid:border-destructive"
 
 /**
  * The one-time book-setup prompt.

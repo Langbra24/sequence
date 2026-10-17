@@ -748,17 +748,15 @@ function Row({ label, value }: { label: string; value: string }) {
  * book is set up; its position comes from dragging it in the canvas grid,
  * not from typing a page number), but the reference wants both to read as
  * fields, not labels, for visual consistency with the boxed fields around
- * them. `mono` matches this file's existing convention of a monospace
- * face for numeric/code-like values (the hex color field, the page-count
- * field) — used here for "Position" (a page number) but not "Page size"
- * (a name).
+ * them. Everything in the app is set in the UI sans; numbers that change
+ * use tabular figures rather than a monospace face.
  */
-function StaticFieldBox({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+function StaticFieldBox({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col items-start gap-1.5 py-0.5 text-sm">
       <span className="text-foreground">{label}</span>
       <div className="flex h-7.5 w-full items-center rounded-md border bg-input/30 px-2">
-        <span className={cn("w-full truncate text-left text-xs text-foreground", mono && "font-mono")}>
+        <span className="w-full truncate text-left text-xs text-foreground">
           {value}
         </span>
       </div>
@@ -796,12 +794,12 @@ function PositionSelect({
         Position
       </span>
       <Select value={position} onValueChange={(next) => onChange(next as number)}>
-        <SelectTrigger aria-labelledby={labelId} className="h-7.5 font-mono">
+        <SelectTrigger aria-labelledby={labelId} className="h-7.5 tabular-nums">
           <SelectValue>{(current: number) => `Page ${current + 1}`}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           {pages.map((page) => (
-            <SelectItem key={page} value={page} className="font-mono">
+            <SelectItem key={page} value={page} className="tabular-nums">
               {`Page ${page + 1}`}
             </SelectItem>
           ))}
