@@ -353,7 +353,7 @@ function MarginField({
 }
 
 /* ------------------------------------------------------------------ */
-/* A text element — role, alignment, width                              */
+/* A text element — content, alignment, role, size, font, color        */
 /* ------------------------------------------------------------------ */
 
 function TextElementSettings({ frameId, elementId }: { frameId: string; elementId: string }) {
@@ -364,7 +364,6 @@ function TextElementSettings({ frameId, elementId }: { frameId: string; elementI
   const updateTextElement = useEditorStore((state) => state.updateTextElement)
   const beginTextColorGesture = useEditorStore((state) => state.beginTextColorGesture)
   const endTextColorGesture = useEditorStore((state) => state.endTextColorGesture)
-  const updateElementBox = useEditorStore((state) => state.updateElementBox)
 
   if (!element || element.kind !== "text") return <Hint>This element no longer exists.</Hint>
 
@@ -380,7 +379,7 @@ function TextElementSettings({ frameId, elementId }: { frameId: string; elementI
       {/* Alignment/Type/Size/Font read as one cluster of type controls in
           the reference (Paper node 7H-0) — grouped by the same gap-6 every
           section already gets, but without a divider line between each of
-          these four specifically, unlike the harder break before/after the
+          these four specifically, unlike the harder break before the
           cluster. Alignment leads the cluster (moved above Type, per direct
           user feedback) since left/center/right icons are the more
           universally recognized formatting control — most text tools put
@@ -416,13 +415,6 @@ function TextElementSettings({ frameId, elementId }: { frameId: string; elementI
           onChange={(color) => updateTextElement(frameId, elementId, { color })}
           onGestureStart={() => beginTextColorGesture(frameId, elementId)}
           onGestureEnd={endTextColorGesture}
-        />
-      </Section>
-      <Separator />
-      <Section title="Width">
-        <PercentField
-          value={element.frame.width}
-          onChange={(width) => updateElementBox(frameId, elementId, { width })}
         />
       </Section>
     </>

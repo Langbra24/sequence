@@ -149,13 +149,15 @@ try {
   // 1. A text box selected.
   await page.keyboard.press("Escape")
   await placeTextOnFirstPage(page)
-  await expectNames("text selected", inspector, {
+  const textControls = await expectNames("text selected", inspector, {
     textbox: ["Text"],
     tab: ["Align left", "Align center", "Align right"],
     combobox: ["Type", "Size", "Font"],
     button: ["Color #18181b"],
-    spinbutton: ["Width"],
   })
+  // The text Width field was removed: it distorted the type rather than styling it.
+  const textNumbers = textControls.filter((control) => control.role === "spinbutton")
+  check(textNumbers.length === 0, `text selected: no number fields (found ${textNumbers.map((c) => `"${c.name}"`).join(", ") || "none"})`)
 
   check(errors.length === 0, `5. no uncaught page errors${errors.length ? `: ${errors.join("; ")}` : ""}`)
 } catch (error) {
