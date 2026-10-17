@@ -42,7 +42,8 @@
     "verify:escape-selection": "SEQUENCE_TEST_HOOKS=1 npm run build && node scripts/verify/escape-selection.mjs",
     "verify:polish": "npm run build && node scripts/verify/polish.mjs",
     "verify:storage-migration": "npm run build && node scripts/verify/storage-migration.mjs",
-    "verify:synthetic-keys": "npm run build && node scripts/verify/synthetic-keys.mjs"
+    "verify:synthetic-keys": "npm run build && node scripts/verify/synthetic-keys.mjs",
+    "verify:tabs": "npm run build && node scripts/verify/tabs.mjs"
   },
   "devDependencies": {
     "pdf-lib": "^1.17.1",

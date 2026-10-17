@@ -259,6 +259,10 @@ input[type="number"]::-webkit-outer-spin-button {
  * don't change between this switcher's two equal-width tabs.
  */
 .tabs-indicator-rail {
+  /* Without left: 0 the rail starts at its static position, already inside
+     the list's padding, and translateX adds the padding a second time:
+     the first tab sat 2x the padding in, the last one touched the border. */
+  left: 0;
   top: var(--active-tab-top);
   height: var(--active-tab-height);
   width: var(--active-tab-width);
