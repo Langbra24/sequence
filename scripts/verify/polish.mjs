@@ -17,6 +17,8 @@
 //      toolbar buttons and the three dismiss buttons. A hovered field's
 //      stepper targets stop short of the next field.
 //   4. `font-synthesis` is `none` on body, and the intro's name isn't italic.
+//      Nothing renders in a monospace face: the text Color trigger's hex is
+//      set in the body sans, left-aligned, 8px from its swatch.
 //   5. Reloading a project that has pages never paints the intro or the
 //      empty-canvas copy, sampled on every animation frame from first paint,
 //      and focus never lands on the intro's "Get started". A fresh context
@@ -312,6 +314,25 @@ try {
 
   await scenario("colour channels", async (page) => {
     const popover = await openColorPicker(page)
+    const trigger = await page.evaluate(() => {
+      const button = [...document.querySelectorAll("aside button")].find((b) => /^#[0-9a-f]{6}$/i.test(b.textContent.trim()))
+      const [swatch, hex] = button.querySelectorAll("span")
+      return {
+        bodyFont: getComputedStyle(document.body).fontFamily,
+        font: getComputedStyle(hex).fontFamily,
+        align: getComputedStyle(hex).textAlign,
+        gap: Math.round((hex.getBoundingClientRect().left - swatch.getBoundingClientRect().right) * 100) / 100,
+      }
+    })
+    check(trigger.font === trigger.bodyFont, `Color trigger hex is set in the body font (${trigger.font})`)
+    check(trigger.align === "left" && trigger.gap === 8, `Color trigger hex is left-aligned, ${trigger.gap}px from its swatch (8)`)
+    const mono = await page.evaluate(() =>
+      [...document.querySelectorAll("body *")]
+        .filter((el) => [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && el.getClientRects().length)
+        .filter((el) => /mono/i.test(getComputedStyle(el).fontFamily))
+        .map((el) => el.textContent.trim().slice(0, 30)),
+    )
+    check(mono.length === 0, `no monospace text on screen with the text sidebar and Color picker open${mono.length ? ` (${mono.join(" | ")})` : ""}`)
     const channels = popover.getByRole("spinbutton")
     const count = await channels.count()
     check(count >= 3, `colour picker shows ${count} channel fields`)

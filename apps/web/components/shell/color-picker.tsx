@@ -119,7 +119,7 @@ export function ColorField({
               className="size-4 shrink-0 rounded-xs border border-white/10"
               style={{ backgroundColor: value }}
             />
-            <span className="flex-1 truncate text-right font-mono text-xs tracking-wider text-foreground">
+            <span className="flex-1 truncate text-left text-xs tabular-nums text-foreground">
               {value}
             </span>
           </button>
