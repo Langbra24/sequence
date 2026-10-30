@@ -12,8 +12,8 @@ export function TopNav() {
   return (
     <header className="flex h-12 shrink-0 items-center justify-between border-b bg-background px-4">
       <span className="flex items-center gap-2">
-        <LogoMark className="size-5 shrink-0" />
-        <span className="font-heading text-base font-medium tracking-tight">Sequence</span>
+        <LogoMark className="size-6 shrink-0" />
+        <span className="font-heading text-lg font-medium tracking-tight">Sequence</span>
       </span>
 
       {/* Eventually the $5 / $15 payment gate. Renders the book and
