@@ -6,8 +6,7 @@
 
 import { readdirSync } from "node:fs"
 import path from "node:path"
-import { chromium } from "playwright"
-
+import { launchBrowser } from "./browser.mjs"
 import { repoRoot } from "./server.mjs"
 
 /** Comfortably above the app's 1024px desktop-only breakpoint. */
@@ -21,7 +20,7 @@ export const FIXTURE_PHOTOS = readdirSync(photosDir)
 
 /** A fresh browser context — and so a fresh, empty IndexedDB — per call. */
 export async function openApp(url, { acceptDownloads = false } = {}) {
-  const browser = await chromium.launch()
+  const browser = await launchBrowser()
   const context = await browser.newContext({
     viewport: DESKTOP_VIEWPORT,
     deviceScaleFactor: 1,

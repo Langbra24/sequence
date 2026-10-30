@@ -48,6 +48,6 @@
   },
   "devDependencies": {
     "pdf-lib": "^1.17.1",
-    "playwright": "1.56.1"
+    "playwright": "1.63.0"
   }
 }
