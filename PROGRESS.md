@@ -304,3 +304,9 @@ surprises). Newest entries at the bottom.
 - PRs #89 (#85), #88 (#86) and #90 (#59) merged in that order. In `canvas-region.tsx`, #88's Book-view `useEscapeSelection` and #90's `hydrated` gate were both kept; the hook runs before the `!hydrated` early return.
 - On the combined tree (identical to `main` after the merges): `npm run verify` passes (118 core / 104 web tests); all 22 verifiers pass, plus e2e; all screenshot scenes render.
 - Every Phase 2 item is ticked. Keyboard work is paused at the maintainer's request (see PLAN backlog). The one open product question is the Import button's resting width (PLAN backlog). The executor is idle.
+
+## 2026-10-30 — logo and favicon (`claude/project-thread-knu80o`)
+
+- Brandon's logo (exported from Paper as SVG) is now `components/shell/logo-mark.tsx`, an inline `currentColor` SVG beside the "Sequence" name in the top nav, `aria-hidden` so the name is read once. The original's `#161616` squares were invisible on the dark-only UI, so per Brandon they're white (the nav's foreground) and the faint ones are white at 13%. Corner radius kept as exported for now; Brandon may want it tighter.
+- Stock Next favicon replaced: `app/icon.svg` (mark on a zinc-800 tile so it reads on light and dark browser tabs), plus `favicon.ico` (16/32/48) and `apple-icon.png` (180) rendered from it.
+- `verify:top-nav` and `verify:polish` pass, but only with a local, uncommitted `executablePath: "/opt/pw-browsers/chromium"` patch: the pinned Playwright still can't find the cloud image's browser.

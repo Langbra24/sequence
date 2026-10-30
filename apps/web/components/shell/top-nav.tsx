@@ -1,6 +1,7 @@
 "use client"
 
 import { ExportDialog } from "@/components/shell/export-dialog"
+import { LogoMark } from "@/components/shell/logo-mark"
 
 /**
  * Fixed app chrome. This never moves, hides, or reflows between modes — it is
@@ -10,7 +11,10 @@ import { ExportDialog } from "@/components/shell/export-dialog"
 export function TopNav() {
   return (
     <header className="flex h-12 shrink-0 items-center justify-between border-b bg-background px-4">
-      <span className="font-heading text-base font-medium tracking-tight">Sequence</span>
+      <span className="flex items-center gap-2">
+        <LogoMark className="size-5 shrink-0" />
+        <span className="font-heading text-base font-medium tracking-tight">Sequence</span>
+      </span>
 
       {/* Eventually the $5 / $15 payment gate. Renders the book and
           downloads it directly for now — see export-dialog.tsx. */}
