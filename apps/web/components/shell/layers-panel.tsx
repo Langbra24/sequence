@@ -5,7 +5,7 @@ import { BookOpenIcon } from "@phosphor-icons/react"
 import { defaultFrameMargins, type Frame, type Margins } from "@sequence/core"
 
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Tabs, TabsIndicator, TabsList, TabsTab } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTab } from "@/components/ui/tabs"
 import { useThumbnail } from "@/components/sequence/use-thumbnail"
 import { cn } from "@/lib/utils"
 import { useEditorStore, type PanelView } from "@/state/editor-store"
@@ -135,9 +135,9 @@ function ProjectNameField({ name }: { name: string }) {
 
 /**
  * Canvas/Book switcher, on `@base-ui/react/tabs` (ui/tabs.tsx) rather than a
- * plain button pair — the active tab now gets a rail that slides between
- * positions (`TabsIndicator`, styled by `.tabs-indicator-rail` in
- * globals.css) instead of snapping its background color instantly.
+ * plain button pair — the active tab gets a pill that slides between
+ * positions (see ui/tabs.tsx) instead of snapping its background color
+ * instantly.
  */
 function PanelViewSwitcher({
   view,
@@ -153,7 +153,6 @@ function PanelViewSwitcher({
       className="shrink-0 border-b px-2 py-1.5"
     >
       <TabsList aria-label="Left panel view">
-        <TabsIndicator />
         <TabsTab value="canvas">Canvas</TabsTab>
         <TabsTab value="book">Book</TabsTab>
       </TabsList>
