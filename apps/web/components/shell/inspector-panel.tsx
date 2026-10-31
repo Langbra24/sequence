@@ -22,7 +22,7 @@ import { SectionLabelContext, useSectionLabel } from "@/components/shell/section
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsIndicator, TabsList, TabsTab } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTab } from "@/components/ui/tabs"
 import { DEFAULT_TEXT_FONT, TEXT_FONTS } from "@/lib/fonts"
 import { cn } from "@/lib/utils"
 import { useEditorStore } from "@/state/editor-store"
@@ -600,16 +600,10 @@ function AlignmentTabs({
   return (
     <Tabs value={value} onValueChange={(next) => onChange(next as TextElement["align"])}>
       <TabsList aria-label="Text alignment">
-        <TabsIndicator />
         {ALIGNMENTS.map((align) => {
           const Icon = ALIGNMENT_ICONS[align]
           return (
-            <TabsTab
-              key={align}
-              value={align}
-              aria-label={`Align ${align}`}
-              className="flex items-center justify-center"
-            >
+            <TabsTab key={align} value={align} aria-label={`Align ${align}`}>
               <Icon className="size-4" />
             </TabsTab>
           )

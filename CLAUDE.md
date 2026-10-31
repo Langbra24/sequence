@@ -170,8 +170,10 @@ npm run verify:storage-migration # build; a project saved under the pre-rename
 npm run verify:synthetic-keys # build; plain Events named keydown/keyup (Chrome
                      #   autofill, extensions) never throw; a real T still works
 npm run verify:tabs  # build; Canvas/Book, alignment and RGB/CMYK tabs share one
-                     #   bordered track (radius 6, padding 2); the selected tab
-                     #   (radius 4) sits 2px from it on every side
+                     #   bordered track (radius 6, padding 2, one height); the
+                     #   selected tab (radius 4) sits 2px from it on every side;
+                     #   every frame of a switch, the pill's label copy sits on
+                     #   the real tabs and no label changes color (no flicker)
 npm run verify:print-guides # build with test hooks; every preset and a custom
                      #   Letter: each page has its red bleed (+3mm) and blue margin
                      #   guide, 2px with 6/5px dashes on screen at fit and at 100%
