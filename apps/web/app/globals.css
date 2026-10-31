@@ -61,7 +61,7 @@
      * The old ring, `--ring` at 50% over `--background`, measured 1.75:1.
      * Against white it is only 2.63:1, which is why the offset matters: the
      * Book view's white page previews get the ring outside the paper, on
-     * `--background`, never over it. Nothing focusable sits on the light
+     * `--canvas` (6.74:1), never over it. Nothing focusable sits on the light
      * tooltip. `npm run verify:focus-ring` measures the real surfaces. */
     --focus-ring: oklch(0.705 0.015 286.067);
     --focus-ring-width: 2px;
