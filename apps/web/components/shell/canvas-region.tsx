@@ -33,8 +33,10 @@ export function CanvasRegion() {
   const view = useEditorStore((state) => state.panelView)
 
   if (view === "book") {
+    // Same `--canvas` surface as the pasteboard, minus the dot grid, so
+    // switching tabs doesn't change the background color.
     return (
-      <div className="relative min-w-0 overflow-auto bg-background">
+      <div className="relative min-w-0 overflow-auto bg-canvas">
         <BookOverview />
       </div>
     )
