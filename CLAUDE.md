@@ -179,7 +179,7 @@ npm run verify:print-guides # build with test hooks; every preset and a custom
                      #   guide, 2px with 6/5px dashes on screen at fit and at 100%
 ```
 
-Verifiers live in `scripts/verify/` and drive the real production build with Playwright (pinned to 1.56.1 to match the cloud image's Chromium; locally run `npx playwright install chromium` once). `npm run e2e` drives the real Export dialog; its header comment states the contract the PDF must meet. Set `SEQUENCE_URL=http://localhost:3000` to point a verifier at an already-running server. `verify:text-selection` reads `window.__sequenceCanvas`, which exists only in a build made with `SEQUENCE_TEST_HOOKS=1` (inlined via `next.config.ts`; ordinary builds compile it out).
+Verifiers live in `scripts/verify/` and drive the real production build with Playwright (pinned to 1.63.0 to match the cloud image's Chromium; locally run `npx playwright install chromium` once). Every verifier launches through `scripts/verify/lib/browser.mjs`, which falls back to the image's `/opt/pw-browsers/chromium` when the pinned version's browser isn't installed, so an image update doesn't stop the verifiers. `npm run e2e` drives the real Export dialog; its header comment states the contract the PDF must meet. Set `SEQUENCE_URL=http://localhost:3000` to point a verifier at an already-running server. `verify:text-selection` reads `window.__sequenceCanvas`, which exists only in a build made with `SEQUENCE_TEST_HOOKS=1` (inlined via `next.config.ts`; ordinary builds compile it out).
 
 ## Cloud sessions
 

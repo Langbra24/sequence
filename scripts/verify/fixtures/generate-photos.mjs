@@ -10,7 +10,7 @@
 import { mkdir, writeFile } from "node:fs/promises"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
-import { chromium } from "playwright"
+import { launchBrowser } from "../lib/browser.mjs"
 
 const outDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "photos")
 
@@ -24,7 +24,7 @@ const PHOTOS = [
 ]
 
 await mkdir(outDir, { recursive: true })
-const browser = await chromium.launch()
+const browser = await launchBrowser()
 const page = await browser.newPage()
 
 for (const photo of PHOTOS) {
