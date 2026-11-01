@@ -2,11 +2,10 @@ import { geistPixel } from "@/lib/fonts"
 import { cn } from "@/lib/utils"
 
 /**
- * The Sequence mark: a 3×3 grid of pages inside a 1px frame, drawn on a
- * whole-pixel grid (15×15: frame, 1px gap, 3px squares with 1px gaps) so it
- * renders as crisp as the pixel wordmark beside it. Inline so it takes
- * `currentColor` from the nav and costs no request. Decorative — the
- * wordmark is what gets read.
+ * The Sequence mark: a 3×3 grid of pages, 15×15 at its nav size — 4px
+ * squares with a 1px corner radius and 1.5px gaps, the Paper export's
+ * proportions. Inline so it takes `currentColor` from the nav and costs no
+ * request. Decorative — the wordmark is what gets read.
  */
 export function LogoMark({ className }: { className?: string }) {
   return (
@@ -15,12 +14,10 @@ export function LogoMark({ className }: { className?: string }) {
       fill="currentColor"
       aria-hidden="true"
       focusable="false"
-      shapeRendering="crispEdges"
       className={className}
     >
-      <rect x="0.5" y="0.5" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1" />
-      {[2, 6, 10].map((y) =>
-        [2, 6, 10].map((x) => <rect key={`${x}-${y}`} x={x} y={y} width="3" height="3" />),
+      {[0, 5.5, 11].map((y) =>
+        [0, 5.5, 11].map((x) => <rect key={`${x}-${y}`} x={x} y={y} width="4" height="4" rx="1" />),
       )}
     </svg>
   )
