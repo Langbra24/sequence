@@ -16,9 +16,9 @@ export function TopNav() {
           1px bottom border, so `mt-px` puts it on whole pixels. The grid is
           the wordmark's x-height and sits on its baseline (an SVG's baseline
           is its bottom edge). */}
-      <span className="mt-px flex items-baseline gap-1.5 text-zinc-300">
+      <span className="mt-px flex items-baseline gap-1.5 text-foreground">
         <Wordmark />
-        <LogoMark className="size-[15px] shrink-0 text-foreground" />
+        <LogoMark className="size-[15px] shrink-0" />
       </span>
 
       {/* Eventually the $5 / $15 payment gate. Renders the book and
