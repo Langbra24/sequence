@@ -185,9 +185,14 @@ type ScreenChrome = FabricObject & {
  * 2 × zoom pixels: about 0.2px at fit-to-view, a pale, near-invisible line,
  * and worst on large pages (12×12 in fits at the lowest zoom). The stroke
  * and dashes are divided by the zoom instead, on every render.
+ *
+ * 1px, not 2: zoomed far out (down to MIN_ZOOM) a page is only a few dozen
+ * pixels across, and two 2px dashed boxes 3mm apart crowded it into one
+ * heavy smudge. A hairline reads as a guide at every zoom without
+ * competing with the photographs.
  */
-const GUIDE_STROKE_PX = 2
-const GUIDE_DASH_PX = [6, 5] as const
+const GUIDE_STROKE_PX = 1
+const GUIDE_DASH_PX = [4, 3] as const
 
 function guideStrokeAt(zoom: number) {
   return { strokeWidth: GUIDE_STROKE_PX / zoom, strokeDashArray: GUIDE_DASH_PX.map((n) => n / zoom) }

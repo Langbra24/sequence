@@ -3,11 +3,12 @@
 // Each frame on the canvas gets two guides (`syncPrintOverlay` in
 // use-fabric-canvas.ts): a red dashed bleed line 3mm outside the trim and a
 // blue dashed margin box inside it. For each preset and a custom Letter size
-// (216×279mm), at fit-to-view and at 100%:
+// (216×279mm), at fit-to-view, at 100% and at the minimum zoom (5%):
 //
 //   1. every page has both guides, in the right place: the bleed rect is the
 //      page grown by 3mm on each side, the margin box lies inside the page;
-//   2. both are 2px wide with 6/5px dashes *on screen*. Before this was
+//   2. both are 1px wide with 4/3px dashes *on screen*, however far out the
+//      view is zoomed (at 2px the two boxes smudged together at 5%). Before this was
 //      fixed, the stroke scaled with the zoom (Fabric's strokeUniform doesn't
 //      cancel the canvas zoom), so at fit-to-view it drew about 0.2px and the
 //      guides all but vanished, worst on 12×12 in, which fits at the lowest zoom;
@@ -104,12 +105,12 @@ function checkGuides(label, book, m) {
   )
   const strokes = [...m.bleeds, ...m.margins]
   const badStroke = strokes.filter(
-    (g) => Math.abs(px(g.strokeWidth) - 2) > 0.05 || !g.dash || Math.abs(px(g.dash[0]) - 6) > 0.05 || Math.abs(px(g.dash[1]) - 5) > 0.05,
+    (g) => Math.abs(px(g.strokeWidth) - 1) > 0.05 || !g.dash || Math.abs(px(g.dash[0]) - 4) > 0.05 || Math.abs(px(g.dash[1]) - 3) > 0.05,
   )
   const s = strokes[0]
   check(
     badStroke.length === 0,
-    `${label}: 2px stroke, 6/5px dashes on screen (${px(s.strokeWidth).toFixed(2)}px, ${s.dash?.map((n) => px(n).toFixed(2)).join("/")}px at ${(m.zoom * 100).toFixed(1)}%)`,
+    `${label}: 1px stroke, 4/3px dashes on screen (${px(s.strokeWidth).toFixed(2)}px, ${s.dash?.map((n) => px(n).toFixed(2)).join("/")}px at ${(m.zoom * 100).toFixed(1)}%)`,
   )
   const misplaced = m.frames.filter((f) => {
     const bleedX = (BLEED_MM / book.width) * f.w
@@ -143,6 +144,18 @@ for (const book of BOOKS) {
     await page.getByRole("button", { name: /^Zoom \d+%, reset to 100%$/ }).click()
     await settle(page)
     checkGuides(`${book.name} at 100%`, book, await readGuides(page))
+
+    // The far end of the zoom range, where a stroke that scaled would be
+    // thickest relative to the page.
+    await page.evaluate(() => {
+      const canvas = window.__sequenceCanvas
+      canvas.zoomToPoint({ x: canvas.width / 2, y: canvas.height / 2 }, 0.05)
+      canvas.requestRenderAll()
+    })
+    await settle(page)
+    const min = await readGuides(page)
+    check(Math.abs(min.zoom - 0.05) < 1e-9, `${book.name}: zoomed out to 5% (${(min.zoom * 100).toFixed(1)}%)`)
+    checkGuides(`${book.name} at 5%`, book, min)
     check(errors.length === 0, `${book.name}: no uncaught page errors${errors.length ? `: ${errors.join("; ")}` : ""}`)
   } catch (error) {
     failures.push(`${book.name}: ${error.message}`)
