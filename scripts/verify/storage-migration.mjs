@@ -83,7 +83,7 @@ try {
   await dismissIntroduction(page)
   await importPhotos(page)
   await setupBook(page, { preset: "A5 Portrait", pageCount: PAGES })
-  await panel.getByRole("button", { name: "Untitled book", exact: true }).click()
+  await panel.getByRole("textbox", { name: "Book name" }).click()
   await panel.getByRole("textbox", { name: "Book name" }).fill(BOOK_NAME)
   await page.keyboard.press("Enter")
   await settle(page)

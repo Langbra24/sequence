@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useId, useRef, useState } from "react"
+import { useId, useRef, useState } from "react"
 import { BookOpenIcon } from "@phosphor-icons/react"
 import { defaultFrameMargins, type Frame, type Margins } from "@sequence/core"
 
@@ -32,10 +32,16 @@ export function LayersPanel() {
 
   return (
     <aside className="flex h-full w-60 flex-col border-r bg-background">
-      <div className="flex h-10 shrink-0 items-center px-3">
-        {/* Blank until IndexedDB answers, rather than the placeholder
-            project's name and empty-state copy (#59). */}
-        {hydrated && <ProjectNameField name={project.name} />}
+      {/* 8px around the field, the tabs' own 6px below that: 14px from the
+          field to the tab track, and both share the same 8px side inset.
+          The 32px slot is reserved before hydration so nothing shifts. */}
+      <div className="shrink-0 px-2 pt-2 pb-2">
+        <div className="h-8">
+          {/* Blank until IndexedDB answers, rather than the placeholder
+              project's name and empty-state copy (#59). */}
+          {/* Keyed by the name so an outside rename (undo) resets the draft. */}
+          {hydrated && <ProjectNameField key={project.name} name={project.name} />}
+        </div>
       </div>
 
       <PanelViewSwitcher view={view} onChange={setView} />
@@ -50,86 +56,56 @@ export function LayersPanel() {
 }
 
 /**
- * The book's name (user-directed: "wrap it in an input when clicked on").
- * Plain text at rest, swapping to a real `<input>` — focused and selected —
- * the instant it's clicked, so the pointer position doubles as a text
- * cursor rather than requiring a second click to place one.
+ * The book's name, as an always-visible bordered input (user-directed: the
+ * earlier click-to-edit text wasn't discoverable as editable). No visible
+ * label; `aria-label` names it. Same border and fill as the tab track below.
  *
  * `draft` is local, uncommitted state — `renameProject` (and the debounced
  * IndexedDB write behind it) only fires on blur/Enter, not per keystroke,
  * the same "don't round-trip through the store on every character" reason
  * `ColorField`'s hex draft works this way. Escape reverts to `project.name`
- * without committing, standard cancel-an-edit behavior.
+ * without committing. Enter and Escape both leave the field, so canvas
+ * shortcuts work again straight after.
  *
- * Falls back to the prior name if committed empty/whitespace-only — an
- * invisible, blank sidebar header is worse than just refusing the edit, and
- * there's no separate "untitled" placeholder state for a book that already
- * has a name to fall back to.
+ * Falls back to the prior name if committed empty/whitespace-only — a blank
+ * book name is worse than just refusing the edit.
  */
 function ProjectNameField({ name }: { name: string }) {
   const renameProject = useEditorStore((state) => state.renameProject)
-  const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(name)
-  const buttonRef = useRef<HTMLButtonElement>(null)
-  // Enter and Escape hand focus back to the name, since the input unmounts
-  // under the keyboard user. A blur means focus already went somewhere on
-  // purpose, so it is left there.
-  const refocusRef = useRef(false)
-
-  useEffect(() => {
-    if (editing || !refocusRef.current) return
-    refocusRef.current = false
-    buttonRef.current?.focus()
-  }, [editing])
+  // Escape blurs, and the blur would otherwise commit the draft it reverts.
+  const cancelRef = useRef(false)
 
   const commit = () => {
+    if (cancelRef.current) {
+      cancelRef.current = false
+      return
+    }
     const trimmed = draft.trim()
     if (trimmed && trimmed !== name) renameProject(trimmed)
-    setEditing(false)
-  }
-
-  if (editing) {
-    return (
-      <input
-        aria-label="Book name"
-        value={draft}
-        onChange={(event) => setDraft(event.target.value)}
-        onBlur={commit}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault()
-            refocusRef.current = true
-            commit()
-          } else if (event.key === "Escape") {
-            event.preventDefault()
-            refocusRef.current = true
-            setDraft(name)
-            setEditing(false)
-          }
-        }}
-        autoFocus
-        onFocus={(event) => event.currentTarget.select()}
-        className="w-full truncate rounded-sm bg-transparent text-sm font-medium text-foreground outline-none focus-ring"
-      />
-    )
+    else setDraft(name)
   }
 
   return (
-    <button
-      ref={buttonRef}
-      type="button"
-      title="Rename book"
-      onClick={() => {
-        setDraft(name)
-        setEditing(true)
+    <input
+      aria-label="Book name"
+      value={draft}
+      spellCheck={false}
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={commit}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          event.preventDefault()
+          event.currentTarget.blur()
+        } else if (event.key === "Escape") {
+          event.preventDefault()
+          cancelRef.current = true
+          setDraft(name)
+          event.currentTarget.blur()
+        }
       }}
-      // 20px of text in a 40px header row: the pseudo-element takes the
-      // target to 36px tall. The truncation sits on the inner span, since
-      // `overflow: hidden` on the button would clip its own hit area.
-      className="relative block w-full rounded-sm text-left text-sm font-medium outline-none before:absolute before:inset-x-0 before:-inset-y-2 hover:bg-muted focus-ring"
-    >
-      <span className="block truncate">{name}</span>
-    </button>
+      className="h-8 w-full truncate rounded-[6px] border bg-input/30 px-2.5 text-sm font-medium text-foreground outline-none transition-colors hover:bg-input/50 focus-ring"
+    />
   )
 }
 

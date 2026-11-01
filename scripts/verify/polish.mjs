@@ -270,7 +270,7 @@ try {
     const sizes = new Set(Object.values(toolbar).map((box) => `${Math.round(box.width)}×${Math.round(box.height)}`))
     check(sizes.size === 1, `both canvas toolbars use one icon-button size (${[...sizes].join(", ")})`)
 
-    await checkHitArea("rename button", page.getByTitle("Rename book"))
+    await checkHitArea("book-name field", page.getByRole("textbox", { name: "Book name" }))
 
     // The inspector's book numbers.
     const inspector = page.locator("aside").last()

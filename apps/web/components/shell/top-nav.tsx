@@ -10,15 +10,16 @@ import { LogoMark, Wordmark } from "@/components/shell/logo-mark"
  */
 export function TopNav() {
   return (
-    <header className="flex h-12 shrink-0 items-center justify-between border-b bg-background px-4">
-      {/* Wordmark then grid, 6px apart. The 28px line box leaves 10px above
-          and below in the 48px bar; centring alone would give 9.5px over the
-          1px bottom border, so `mt-px` puts it on whole pixels. The grid is
-          the wordmark's x-height and sits on its baseline (an SVG's baseline
-          is its bottom edge). */}
-      <span className="mt-px flex items-baseline gap-1.5 text-foreground">
-        <Wordmark />
+    <header className="flex h-12 shrink-0 items-center justify-between border-b bg-background px-2">
+      {/* Grid then wordmark, 8px apart; the 8px side padding lines the grid
+          up with the book-name field below. The 28px line box leaves 10px
+          above and below in the 48px bar; centring alone would give 9.5px
+          over the 1px bottom border, so `mt-px` puts it on whole pixels. The
+          grid is the wordmark's x-height and sits on its baseline (an SVG's
+          baseline is its bottom edge). */}
+      <span className="mt-px flex items-baseline gap-2 text-foreground">
         <LogoMark className="size-[15px] shrink-0" />
+        <Wordmark />
       </span>
 
       {/* Eventually the $5 / $15 payment gate. Renders the book and
