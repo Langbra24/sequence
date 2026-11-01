@@ -24,6 +24,7 @@ export default defineConfig({
       // (a bundler loader rewrites the call at build time) — see
       // test/mocks/next-font-google.ts for why this needs a stand-in here.
       "next/font/google": `${import.meta.dirname}/test/mocks/next-font-google.ts`,
+      "next/font/local": `${import.meta.dirname}/test/mocks/next-font-local.ts`,
     },
   },
 })
