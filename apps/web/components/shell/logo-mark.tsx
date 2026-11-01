@@ -24,11 +24,18 @@ export function LogoMark({ className }: { className?: string }) {
 }
 
 /**
- * The "sequence" wordmark: live text in Geist Pixel (Square) at 28px, where
- * its x-height (the "e") is 15px, the height of the mark.
+ * The "sequence" wordmark: live text in Geist Pixel at 28px, where its
+ * x-height (the "e") is 15px, the height of the mark. The variable font's
+ * `ELSH` (element shape) axis is set to 42, as in Paper: each letter drawn
+ * as separate rounded squares (0 = solid, 40 = grid, 60 = triangle).
  */
 export function Wordmark({ className }: { className?: string }) {
   return (
-    <span className={cn(geistPixel.className, "text-[28px] leading-none", className)}>sequence</span>
+    <span
+      className={cn(geistPixel.className, "text-[28px] leading-none", className)}
+      style={{ fontVariationSettings: '"ELSH" 42' }}
+    >
+      sequence
+    </span>
   )
 }
