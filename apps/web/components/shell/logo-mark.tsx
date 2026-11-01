@@ -1,3 +1,6 @@
+import { geistPixel } from "@/lib/fonts"
+import { cn } from "@/lib/utils"
+
 /**
  * The Sequence mark: a 3×3 grid of pages, matching the Paper export
  * (5-unit squares, 2-unit gaps). Inline so it takes `currentColor` from the
@@ -22,22 +25,11 @@ export function LogoMark({ className }: { className?: string }) {
 }
 
 /**
- * The "sequence" wordmark, set in Geist Pixel in Paper. That face isn't on
- * Google Fonts, so the 2× export is used as a mask and filled with
- * `currentColor` — it stays crisp on retina and follows the nav's text color.
+ * The "sequence" wordmark: live text in Geist Pixel (Grid), at the 34px
+ * Paper sets it at. Its x-height then matches the 19px mark.
  */
 export function Wordmark({ className }: { className?: string }) {
   return (
-    <span
-      role="img"
-      aria-label="Sequence"
-      className={className}
-      style={{
-        backgroundColor: "currentColor",
-        maskImage: "url(/wordmark.png)",
-        maskSize: "100% 100%",
-        maskRepeat: "no-repeat",
-      }}
-    />
+    <span className={cn(geistPixel.className, "text-[34px] leading-none", className)}>sequence</span>
   )
 }

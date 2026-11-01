@@ -11,10 +11,12 @@ import { LogoMark, Wordmark } from "@/components/shell/logo-mark"
 export function TopNav() {
   return (
     <header className="flex h-12 shrink-0 items-center justify-between border-b bg-background px-4">
-      {/* Wordmark then grid, tops aligned: the grid is the wordmark's x-height
-          (no ascenders in "sequence"), so the q's descender hangs below it. */}
-      <span className="flex items-start gap-2.5 text-zinc-300">
-        <Wordmark className="block h-[24.5px] w-[145px] shrink-0" />
+      {/* Wordmark then grid, 10px apart. The grid is the wordmark's x-height
+          and sits on its baseline (an SVG's baseline is its bottom edge).
+          "sequence" has no ascenders, so its ink sits low in the line box;
+          the 2px lift centres the x-height on the bar. */}
+      <span className="flex -translate-y-0.5 items-baseline gap-2.5 text-zinc-300">
+        <Wordmark />
         <LogoMark className="size-[19px] shrink-0 text-foreground" />
       </span>
 

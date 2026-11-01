@@ -7,6 +7,7 @@ import {
   Playfair_Display,
   Work_Sans,
 } from "next/font/google"
+import localFont from "next/font/local"
 
 /**
  * Every font this app loads, in one place — `layout.tsx` applies the
@@ -38,6 +39,15 @@ const libreBaskerville = Libre_Baskerville({
 })
 const workSans = Work_Sans({ subsets: ["latin"], variable: "--font-work-sans" })
 const archivo = Archivo({ subsets: ["latin"], variable: "--font-archivo" })
+
+/** Geist Pixel (Grid), for the nav wordmark only — not in `TEXT_FONTS`. It
+ *  isn't on Google Fonts, so it's vendored from Vercel's `geist` package by
+ *  `npm run fetch:geist-pixel` (OFL, license beside the file). */
+export const geistPixel = localFont({
+  src: "../assets/fonts/GeistPixel-Grid.woff2",
+  weight: "500",
+  display: "block",
+})
 
 /** Every loaded font's `.variable`, applied to `<html>` in `layout.tsx` so
  *  every font's CSS custom property is available app-wide. */
