@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Downloads Geist Pixel (Grid) from Vercel's `geist` npm package into
+// Downloads Geist Pixel (Square) from Vercel's `geist` npm package into
 // apps/web/assets/fonts/, along with its OFL license. The output is committed,
 // so this only needs re-running to bump GEIST_VERSION.
 //
@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url"
 
 const GEIST_VERSION = "1.9.0"
 const FILES = {
-  "package/dist/fonts/geist-pixel/GeistPixel-Grid.woff2": "GeistPixel-Grid.woff2",
+  "package/dist/fonts/geist-pixel/GeistPixel-Square.woff2": "GeistPixel-Square.woff2",
   "package/LICENSE.txt": "GeistPixel-LICENSE.txt",
 }
 

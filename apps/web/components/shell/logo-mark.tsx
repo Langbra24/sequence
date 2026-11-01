@@ -25,7 +25,7 @@ export function LogoMark({ className }: { className?: string }) {
 }
 
 /**
- * The "sequence" wordmark: live text in Geist Pixel (Grid), at the 34px
+ * The "sequence" wordmark: live text in Geist Pixel (Square), at the 34px
  * Paper sets it at. Its x-height then matches the 19px mark.
  */
 export function Wordmark({ className }: { className?: string }) {
