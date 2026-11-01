@@ -1,30 +1,41 @@
+import { geistPixel } from "@/lib/fonts"
+import { cn } from "@/lib/utils"
+
 /**
- * The Sequence mark: a 3×3 grid of pages, five filled and four faint.
- * Inline so it takes `currentColor` from the nav and costs no request.
- * The faint squares are a fixed zinc-600, one step above the nav's zinc-800
- * surface, so they stay visible without competing with the filled ones.
- * Decorative — the "Sequence" name beside it is what gets read.
+ * The Sequence mark: a 3×3 grid of pages, 15×15 at its nav size — 4px
+ * squares with a 1px corner radius and 1.5px gaps, the Paper export's
+ * proportions. Inline so it takes `currentColor` from the nav and costs no
+ * request. Decorative — the wordmark is what gets read.
  */
 export function LogoMark({ className }: { className?: string }) {
   return (
     <svg
-      viewBox="0 -0.03 18.5 18.5"
+      viewBox="0 0 15 15"
       fill="currentColor"
       aria-hidden="true"
       focusable="false"
       className={className}
     >
-      <g className="fill-zinc-600">
-        <rect x="0" y="-0.03" width="5.18" height="5.18" rx="0.5" />
-        <rect x="0" y="6.63" width="5.18" height="5.18" rx="0.5" />
-        <rect x="13.32" y="6.63" width="5.18" height="5.18" rx="0.5" />
-        <rect x="13.32" y="13.29" width="5.18" height="5.18" rx="0.5" />
-      </g>
-      <rect x="6.66" y="-0.03" width="5.18" height="5.18" rx="0.5" />
-      <rect x="13.32" y="-0.03" width="5.18" height="5.18" rx="0.5" />
-      <rect x="6.66" y="6.63" width="5.18" height="5.18" rx="0.5" />
-      <rect x="0" y="13.29" width="5.18" height="5.18" rx="0.5" />
-      <rect x="6.66" y="13.29" width="5.18" height="5.18" rx="0.5" />
+      {[0, 5.5, 11].map((y) =>
+        [0, 5.5, 11].map((x) => <rect key={`${x}-${y}`} x={x} y={y} width="4" height="4" rx="1" />),
+      )}
     </svg>
+  )
+}
+
+/**
+ * The "sequence" wordmark: live text in Geist Pixel at 28px, where its
+ * x-height (the "e") is 15px, the height of the mark. The variable font's
+ * `ELSH` (element shape) axis is set to 42, as in Paper: each letter drawn
+ * as separate rounded squares (0 = solid, 40 = grid, 60 = triangle).
+ */
+export function Wordmark({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(geistPixel.className, "text-[28px] leading-none", className)}
+      style={{ fontVariationSettings: '"ELSH" 42' }}
+    >
+      sequence
+    </span>
   )
 }

@@ -253,7 +253,7 @@ try {
   state = await active()
   check(state?.kind === "text" && !state.editing && state.handles, "6b. Escape returns to selected with handles")
 
-  await page.getByRole("complementary").first().getByRole("button", { name: "Untitled book", exact: true }).click()
+  await page.getByRole("complementary").first().getByRole("textbox", { name: "Book name" }).click()
   await page.getByRole("textbox", { name: "Book name" }).press("Enter")
   state = await active()
   check(

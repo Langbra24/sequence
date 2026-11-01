@@ -207,7 +207,7 @@ try {
     return element && element !== document.body ? element.tagName.toLowerCase() : null
   })
   check(["a", "button", "input"].includes(first), `3. the first Tab focuses a real UI control (<${first}>)`)
-  await page.getByRole("complementary").first().getByRole("button", { name: "Untitled book", exact: true }).click()
+  await page.getByRole("complementary").first().getByRole("textbox", { name: "Book name" }).click()
   const field = page.getByRole("textbox", { name: "Book name" })
   await field.press("End")
   await page.keyboard.press("[")

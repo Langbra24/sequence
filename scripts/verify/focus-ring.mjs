@@ -174,7 +174,7 @@ try {
   const inspector = page.getByRole("complementary").last()
 
   await measure(page, "top nav Export", banner.getByRole("button", { name: "Export" }), ["Shift+Tab", "Tab"])
-  await measure(page, "layers rename button", layers.locator('button[title="Rename book"]'))
+  await measure(page, "layers book-name field", layers.getByRole("textbox", { name: "Book name" }))
 
   // A text box gives the inspector a select trigger.
   await placeTextOnFirstPage(page)

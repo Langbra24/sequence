@@ -5,7 +5,7 @@
 //   SEQUENCE_URL=http://localhost:3000 node scripts/verify/rename.mjs
 //
 // The contract:
-//   1. Clicking the name swaps in a focused text field. Escape cancels the
+//   1. The name is an always-visible text field. Escape cancels the
 //      edit; an empty or whitespace-only name is refused and the old name kept;
 //      Enter and blur both commit.
 //   2. Typing inside the field never reaches the canvas shortcuts: a `T` lands
@@ -32,8 +32,20 @@ const app = await startApp()
 const { browser, page, errors } = await openApp(app.url, { acceptDownloads: true })
 
 const panel = page.getByRole("complementary").first()
-const nameButton = (name) => panel.getByRole("button", { name, exact: true })
 const nameField = panel.getByRole("textbox", { name: "Book name" })
+
+/** The saved book name, polled from IndexedDB until it reads `expected`
+ *  (the save is debounced) or 5s pass. Proves the field committed. */
+const storedName = async (expected) => {
+  const deadline = Date.now() + 5_000
+  let name
+  while (Date.now() < deadline) {
+    name = (await storedProject()).name
+    if (name === expected) break
+    await page.waitForTimeout(100)
+  }
+  return name
+}
 
 /** What the canvas would show if `T` had armed the text tool. */
 const canvasCursor = async () => {
@@ -70,63 +82,58 @@ try {
   await importPhotos(page)
   await setupBook(page, { preset: "A5 Portrait", pageCount: 8 })
 
-  // 1. Click → focused field, the whole name selected.
-  await nameButton(DEFAULT_NAME).click()
-  await nameField.waitFor()
-  const selected = await nameField.evaluate(
-    (input) => document.activeElement === input && input.selectionStart === 0 && input.selectionEnd === input.value.length,
-  )
-  check(selected, "clicking the name opens a focused field with the name selected")
+  // 1. The name is a real field from the start: a click focuses it.
+  await nameField.click()
+  check(await nameField.evaluate((input) => document.activeElement === input), "clicking the name field focuses it")
+  check((await nameField.inputValue()) === DEFAULT_NAME, `the field shows the name "${DEFAULT_NAME}"`)
 
-  // Escape cancels.
-  await page.keyboard.type("Discard me")
+  // Escape cancels, and leaves the field.
+  await nameField.fill("Discard me")
   await page.keyboard.press("Escape")
-  check(await nameButton(DEFAULT_NAME).isVisible(), "Escape cancels the edit and keeps the old name")
+  check((await nameField.inputValue()) === DEFAULT_NAME, "Escape cancels the edit and keeps the old name")
+  check(await nameField.evaluate((input) => document.activeElement !== input), "Escape leaves the field")
 
   // Empty and whitespace-only names are refused.
   for (const [label, value] of [
     ["an empty", ""],
     ["a whitespace-only", "   "],
   ]) {
-    await nameButton(DEFAULT_NAME).click()
     await nameField.fill(value)
     await page.keyboard.press("Enter")
-    check(await nameButton(DEFAULT_NAME).isVisible(), `${label} name is refused and the old name kept`)
+    check((await nameField.inputValue()) === DEFAULT_NAME, `${label} name is refused and the old name kept`)
   }
 
   // 2. `T` inside the field is a character, not the text-tool shortcut.
   const cursorBefore = await canvasCursor()
-  await nameButton(DEFAULT_NAME).click()
+  await nameField.click()
   await nameField.press("End")
   await page.keyboard.press("T")
   check((await nameField.inputValue()) === `${DEFAULT_NAME}T`, "typing T inside the field types a T")
   check((await canvasCursor()) === cursorBefore, `typing T inside the field leaves the text tool unarmed (canvas cursor "${cursorBefore}")`)
   await page.keyboard.press("Escape")
 
-  // Enter commits.
-  await nameButton(DEFAULT_NAME).click()
+  // Enter commits, and leaves the field so canvas shortcuts work again.
   await nameField.fill(NEW_NAME)
   await page.keyboard.press("Enter")
-  check(await nameButton(NEW_NAME).isVisible(), `Enter commits the new name "${NEW_NAME}"`)
-  check(
-    await nameButton(NEW_NAME).evaluate((button) => document.activeElement === button),
-    "focus returns to the name after Enter",
-  )
+  check((await storedName(NEW_NAME)) === NEW_NAME, `Enter commits the new name "${NEW_NAME}"`)
+  check(await nameField.evaluate((input) => document.activeElement !== input), "Enter leaves the field")
 
   // Blur commits too: rename away and back, committing each by clicking off.
-  await nameButton(NEW_NAME).click()
   await nameField.fill("Blur test")
   await page.getByRole("banner").click({ position: { x: 600, y: 10 } })
-  check(await nameButton("Blur test").isVisible(), "blur commits the edit")
-  await nameButton("Blur test").click()
+  check((await storedName("Blur test")) === "Blur test", "blur commits the edit")
   await nameField.fill(NEW_NAME)
   await page.keyboard.press("Enter")
 
   // 3. An immediate reload keeps it — no waiting out the save debounce.
   await page.reload({ waitUntil: "networkidle" })
   await page.getByRole("banner").getByText("Sequence").waitFor()
-  const persisted = await nameButton(NEW_NAME)
-    .waitFor({ timeout: 10_000 })
+  const persisted = await page
+    .waitForFunction(
+      (name) => document.querySelector('input[aria-label="Book name"]')?.value === name,
+      NEW_NAME,
+      { timeout: 10_000 },
+    )
     .then(() => true)
     .catch(() => false)
   check(persisted, `"${NEW_NAME}" survives a reload`)
