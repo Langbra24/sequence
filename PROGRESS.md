@@ -317,3 +317,9 @@ surprises). Newest entries at the bottom.
 - Brandon's logo (exported from Paper as SVG) is now `components/shell/logo-mark.tsx`, an inline `currentColor` SVG beside the "Sequence" name in the top nav, `aria-hidden` so the name is read once. The original's `#161616` squares were invisible on the dark-only UI, so per Brandon they're white (the nav's foreground) and the faint ones are zinc-600 (one step above the zinc-800 nav, per Brandon). Corner radius is 2px at the 74px Paper artboard size (rx 0.5, down from 1.5) per Brandon; the mark is 24px. The name is Geist ExtraBold, -0.03em tracking, 32px so the S spans the mark top to bottom (measured: mark 11.5–35.5px, S 11.75–35.5px).
 - Stock Next favicon replaced: `app/icon.svg` (mark on a zinc-800 tile so it reads on light and dark browser tabs), plus `favicon.ico` (16/32/48) and `apple-icon.png` (180) rendered from it.
 - `verify:top-nav` and `verify:polish` pass, but only with a local, uncommitted `executablePath: "/opt/pw-browsers/chromium"` patch: the pinned Playwright still can't find the cloud image's browser.
+
+## 2026-11-14 — all-white favicon (`claude/project-thread-nxabvx`, no issue: direct request)
+
+- Favicon's nine squares are now all `#fafafa` on the zinc-800 tile, matching the teaser video's end card (Brandon). The faint zinc-600 squares are gone from the favicon only; the nav mark is unchanged.
+- `icon.svg` geometry snapped to the 32px grid (6px squares, 2px gaps, 5px inset) so it renders crisp at 16/32 device px. `favicon.ico` 16/32/48 are drawn pixel-exact per size (not downscaled), and `apple-icon.png` (180, full-bleed) is rendered from the SVG with Playwright's Chromium.
+- Verified: `npm run build`; `next start` serves all three `<link rel="icon"|"apple-touch-icon">` tags and the new SVG.

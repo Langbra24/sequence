@@ -1,16 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <rect width="32" height="32" rx="7" fill="#27272a"/>
-  <g transform="translate(5.75 5.78)" fill="#fafafa">
-    <g fill="#52525b">
-      <rect x="0" y="-0.03" width="5.18" height="5.18" rx="0.5"/>
-      <rect x="0" y="6.63" width="5.18" height="5.18" rx="0.5"/>
-      <rect x="13.32" y="6.63" width="5.18" height="5.18" rx="0.5"/>
-      <rect x="13.32" y="13.29" width="5.18" height="5.18" rx="0.5"/>
-    </g>
-    <rect x="6.66" y="-0.03" width="5.18" height="5.18" rx="0.5"/>
-    <rect x="13.32" y="-0.03" width="5.18" height="5.18" rx="0.5"/>
-    <rect x="6.66" y="6.63" width="5.18" height="5.18" rx="0.5"/>
-    <rect x="0" y="13.29" width="5.18" height="5.18" rx="0.5"/>
-    <rect x="6.66" y="13.29" width="5.18" height="5.18" rx="0.5"/>
+  <g fill="#fafafa">
+    <rect x="5" y="5" width="6" height="6" rx="0.5"/>
+    <rect x="13" y="5" width="6" height="6" rx="0.5"/>
+    <rect x="21" y="5" width="6" height="6" rx="0.5"/>
+    <rect x="5" y="13" width="6" height="6" rx="0.5"/>
+    <rect x="13" y="13" width="6" height="6" rx="0.5"/>
+    <rect x="21" y="13" width="6" height="6" rx="0.5"/>
+    <rect x="5" y="21" width="6" height="6" rx="0.5"/>
+    <rect x="13" y="21" width="6" height="6" rx="0.5"/>
+    <rect x="21" y="21" width="6" height="6" rx="0.5"/>
   </g>
 </svg>
