@@ -25,7 +25,7 @@ todos/                  triage and review findings
 - **`core/` imports nothing from React, Next, Fabric.js, or Stripe.** It is pure TypeScript with no DOM assumptions. This is what makes the MIT-core / paid-app split real rather than aspirational. If something in `core/` needs the DOM, it belongs in `apps/web/` instead.
 - **No payment code in `core/`.** The $15 download is gated at the *download page*, not by license-key logic inside the shipped bundle — see the brief. Do not add license validation, phone-home checks, or DRM anywhere.
 - **No accounts, no backend** beyond thin serverless functions for Stripe and for filing the feedback control's submissions as GitHub issues (`apps/web/app/api/feedback/route.ts` — direct user request: the prior client-only version required the bookmaker to sign into GitHub themselves and the maintainer got no notification; this is a single-purpose route holding one repo-scoped token, not a general backend). Project state is local-first (IndexedDB, not cookies).
-- **Fonts must be OFL-licensed.** Fonts get embedded in exported PDFs; commercial/desktop-only licenses often forbid that. Currently: Lora (heading/serif) + Geist (sans), both OFL, plus Geist Pixel (variable, OFL) for the nav wordmark only — vendored into `apps/web/assets/fonts/` by `npm run fetch:geist-pixel` because it isn't on Google Fonts.
+- **Fonts must be OFL-licensed.** Fonts get embedded in exported PDFs; commercial/desktop-only licenses often forbid that. Currently: Lora (heading/serif) + Geist (sans), both OFL; the nav wordmark is Geist 500 too.
 - **Design tokens flow code → Paper.design, never the reverse.** The CSS variables in `apps/web/app/globals.css` are the source of truth; Paper mirrors them via its MCP agent. Never hand-maintain a second copy.
 
 ## Scope decisions already made
@@ -89,7 +89,6 @@ Most published examples are v5/v6 and will not work as written.
 npm install          # root — workspaces
 npm run dev          # apps/web dev server
 npm run build        # apps/web production build
-npm run fetch:geist-pixel # re-download the vendored Geist Pixel font (output is committed)
 npm run typecheck    # all workspaces
 npm run lint         # all workspaces
 npm test             # all workspaces (Vitest) + verifier self-tests
@@ -121,7 +120,8 @@ npm run verify:color-undo # build; a typed hex and a hue drag are one undo step
                      #   each; undo/redo move the color everywhere
 npm run verify:dialog-focus # build; fast Tab/Shift+Tab never leave the Export
                      #   dialog or reach what the intro/book-setup overlays cover
-npm run verify:top-nav # build; the top nav holds exactly one button, Export
+npm run verify:top-nav # build; the top nav holds exactly one button, Export;
+                     #   the Geist logo's ink sits >= 4px inside it, top and bottom
 npm run verify:book-overview # build; a colored caption shows in the Book view
                      #   on a white page, in exactly the picked color
 npm run verify:book-setup # build; the book-setup dialog's copy, Custom's aria-pressed,
