@@ -11,17 +11,17 @@ import { LogoMark, Wordmark } from "@/components/shell/logo-mark"
 export function TopNav() {
   return (
     <header className="flex h-12 shrink-0 items-center justify-between border-b bg-background px-2">
-      {/* Wordmark then grid, 10px apart (Paper); the 8px side padding lines
-          the wordmark up with the book-name field below. The grid is the
-          wordmark's x-height and sits on its baseline (an SVG's baseline is
-          its bottom edge). "sequence" has no ascenders, so centring the 36px
-          line box leaves the ink low (15.5px above, 5.5px below); `-top-[4.5px]`
-          centres the ink itself, x-height to the q's descender, in the 47px
-          over the border: 11px above, 10px below, baseline and grid on whole
-          pixels. `verify:top-nav` measures it. */}
-      <span data-logo className="relative -top-[4.5px] flex items-baseline gap-[10px] text-foreground">
+      {/* Wordmark then grid, 8px apart (Paper's 10px scaled from 36px to
+          28px); the 8px side padding lines the wordmark up with the
+          book-name field below. The grid is the wordmark's x-height and sits
+          on its baseline (an SVG's baseline is its bottom edge). "sequence"
+          has no ascenders, so centring the 28px line box leaves the ink low;
+          `-top-[4.5px]` centres the ink itself, x-height to the q's
+          descender, in the 47px over the border: 13px above and below,
+          baseline and grid on whole pixels. `verify:top-nav` measures it. */}
+      <span data-logo className="relative -top-[4.5px] flex items-baseline gap-2 text-foreground">
         <Wordmark />
-        <LogoMark className="size-[19px] shrink-0" />
+        <LogoMark className="size-[15px] shrink-0" />
       </span>
 
       {/* Eventually the $5 / $15 payment gate. Renders the book and
