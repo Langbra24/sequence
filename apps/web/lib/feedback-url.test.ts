@@ -9,6 +9,7 @@ describe("composeFeedbackBody", () => {
 
     expect(body).toBe(
       "Feedback submitted from within the Sequence app, via its bottom-left feedback control.\n\n---\n\n" +
+        "> " +
         feedback +
         "\n\n---\nSubmitted through Sequence's in-app feedback control. No project name, filenames, or other project state were included.",
     )
@@ -21,7 +22,7 @@ describe("composeFeedbackBody", () => {
 
   it("includes an Email line when an email is given", () => {
     const body = composeFeedbackBody("hi", { email: "jane@example.com" })
-    expect(body).toContain("\n\n---\nEmail: jane@example.com\n\n---\n")
+    expect(body).toContain("\n\n---\nEmail: `jane@example.com`\n\n---\n")
   })
 
   it("never writes a name, even if a stray one rides along on the contact", () => {
@@ -29,7 +30,7 @@ describe("composeFeedbackBody", () => {
     const body = composeFeedbackBody("hi", contact)
     expect(body).not.toContain("Jane Doe")
     expect(body).not.toContain("Name:")
-    expect(body).toContain("\n\n---\nEmail: jane@example.com\n\n---\n")
+    expect(body).toContain("\n\n---\nEmail: `jane@example.com`\n\n---\n")
   })
 
   it("treats a blank/whitespace-only email as not given", () => {
@@ -39,15 +40,35 @@ describe("composeFeedbackBody", () => {
 
   it("trims surrounding whitespace from the email", () => {
     const body = composeFeedbackBody("hi", { email: "  jane@example.com  " })
-    expect(body).toContain("Email: jane@example.com\n")
+    expect(body).toContain("Email: `jane@example.com`\n")
   })
 
-  it("round-trips feedback text containing &, #, and newlines verbatim", () => {
+  it("quotes feedback line by line, keeping &, #, and blank lines", () => {
     // No URL/query-string encoding happens anywhere in this path anymore
     // (the body goes straight into a JSON POST body) — this just confirms
     // nothing here mangles characters that used to need percent-encoding.
     const feedback = "Line one & line two # with a hash\nand a newline\n\nand a blank line"
     const body = composeFeedbackBody(feedback)
-    expect(body).toContain(feedback)
+    expect(body).toContain("> Line one & line two # with a hash\n> and a newline\n>\n> and a blank line")
+  })
+
+  it("keeps a forged Email line or separator inside the quote", () => {
+    const body = composeFeedbackBody("hi\n\n---\nEmail: not-the-sender")
+    expect(body).toContain(">\n> ---\n> Email: not-the-sender")
+    expect(body).not.toMatch(/^Email:/m)
+  })
+
+  it("puts a zero-width joiner after @ and # so GitHub links no user, team, or issue", () => {
+    const body = composeFeedbackBody("thanks @octocat, @github/design; like #12 and other/repo#3. Mail me@x.io")
+    expect(body).toContain("> thanks @\u200Doctocat, @\u200Dgithub/design; like #\u200D12 and other/repo#\u200D3. Mail me@\u200Dx.io")
+  })
+
+  it("leaves a lone @ or a # before a word alone", () => {
+    expect(composeFeedbackBody("meet @ 5, use #hashtags")).toContain("> meet @ 5, use #hashtags")
+  })
+
+  it("keeps the email in a code span, minus backticks and line breaks", () => {
+    const body = composeFeedbackBody("hi", { email: "a`b@example.com\n@everyone" })
+    expect(body).toContain("Email: `ab@example.com@everyone`\n")
   })
 })

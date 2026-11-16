@@ -14,7 +14,12 @@
 //      The popover's only contact field is Email (#70: the issue is public,
 //      so there is no Name field), and an entered email reaches the body.
 //   2. Every failure shows a toast that says what happened, in the route's
-//      own words, and keeps the draft in the popover for a retry.
+//      own words, and keeps the draft in the popover for a retry. That
+//      includes a malformed email, which the route refuses before GitHub.
+//   3. The route files nothing for a request no page of the app would send:
+//      a cross-site or non-JSON post is refused with 403, and a filled-in
+//      honeypot is answered 201 with no issue filed. The browser's own
+//      requests above are the same-origin case that has to keep working.
 
 import http from "node:http"
 import path from "node:path"
@@ -34,6 +39,13 @@ const SCENARIOS = [
     route: 201,
     email: "reader@example.com",
     toast: ["Feedback sent", "We'll review your feedback in 2–3 business days."],
+  },
+  {
+    name: "malformed email",
+    github: { status: 201, body: { html_url: "https://github.com/Langbra24/sequence/issues/999" } },
+    route: 400,
+    email: "reader@example",
+    toast: ["Couldn't send feedback", "That email address doesn’t look right. Fix it, or leave it blank; your note is still here."],
   },
   {
     name: "401 bad token",
@@ -184,8 +196,8 @@ try {
         `GitHub received one issue on Langbra24/sequence with the note, title, and bearer token`,
       )
       check(
-        Boolean(issue?.body.body.includes(`Email: ${scenario.email}`)) && !/^Name:/m.test(issue?.body.body ?? ""),
-        `the issue body carries "Email: ${scenario.email}" and no Name line`,
+        Boolean(issue?.body.body.includes(`Email: \`${scenario.email}\``)) && !/^Name:/m.test(issue?.body.body ?? ""),
+        `the issue body carries "Email: \`${scenario.email}\`" and no Name line`,
       )
     }
   }
@@ -195,6 +207,22 @@ try {
   check(received.length === 0, "with no token, the route never calls GitHub")
 
   await submit(configured.url, OFFLINE_SCENARIO)
+
+  // Requests no page of the app sends, made straight from Node.
+  const post = (headers, body) =>
+    fetch(`${configured.url}/api/feedback`, { method: "POST", headers, body: JSON.stringify(body) }).then((r) => r.status)
+  const sameOrigin = { "Content-Type": "application/json", "Sec-Fetch-Site": "same-origin" }
+  answer = { status: 201, body: { html_url: "https://github.com/Langbra24/sequence/issues/999" } }
+  received.length = 0
+  const crossSite = await post({ "Content-Type": "application/json", "Sec-Fetch-Site": "cross-site" }, { feedback: "x" })
+  const foreignOrigin = await post({ "Content-Type": "application/json", Origin: "https://evil.example" }, { feedback: "x" })
+  const textPlain = await post({ "Content-Type": "text/plain", "Sec-Fetch-Site": "same-origin" }, { feedback: "x" })
+  check(
+    crossSite === 403 && foreignOrigin === 403 && textPlain === 403 && received.length === 0,
+    `cross-site ${crossSite}, foreign Origin ${foreignOrigin}, text/plain ${textPlain} (want 403 each), GitHub called ${received.length} times`,
+  )
+  const honeypot = await post(sameOrigin, { feedback: "x", website: "https://spam.example" })
+  check(honeypot === 201 && received.length === 0, `a filled honeypot gets ${honeypot} (want 201) and files nothing`)
 } catch (error) {
   failures.push(error.message)
   console.error(`✗ ${error.message}`)
