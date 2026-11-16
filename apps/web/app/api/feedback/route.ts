@@ -2,9 +2,12 @@ import { NextResponse } from "next/server"
 
 import {
   composeFeedbackBody,
+  EMAIL_MAX_LENGTH,
+  EMAIL_PATTERN,
   FEEDBACK_ISSUE_TITLE,
   FEEDBACK_MAX_LENGTH,
   GITHUB_REPO,
+  HONEYPOT_FIELD,
   type FeedbackContact,
 } from "@/lib/feedback-url"
 
@@ -28,11 +31,21 @@ import {
  * (never `NEXT_PUBLIC_*`, which Next inlines into client bundles). See
  * apps/web/.env.example.
  *
- * No rate limiting or spam defense beyond the length cap below — this is a
- * single-purpose personal-project endpoint, not a public API; revisit if
- * abuse actually shows up.
+ * Spam defense is deliberately thin, because this is a single-purpose
+ * personal-project endpoint, not a public API:
+ * - JSON from a same-origin page only (`isSameOriginJson`), so no other
+ *   site can make its visitors' browsers file issues. A plain `text/plain`
+ *   form post needs no CORS preflight, so the Content-Type check matters.
+ * - A honeypot field the control hides from people (`HONEYPOT_FIELD`): a
+ *   bot that fills it is told "sent" and nothing is filed.
+ * - Rate limiting is a Vercel Firewall rule on this path, not code here (a
+ *   serverless function has no shared memory to count in).
  */
 export async function POST(request: Request) {
+  if (!isSameOriginJson(request)) {
+    return NextResponse.json({ error: "Feedback can only be sent from Sequence itself." }, { status: 403 })
+  }
+
   let payload: unknown
   try {
     payload = await request.json()
@@ -44,9 +57,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 })
   }
 
-  const { feedback: rawFeedback, contact: rawContact } = payload as {
+  const {
+    feedback: rawFeedback,
+    contact: rawContact,
+    [HONEYPOT_FIELD]: honeypot,
+  } = payload as {
     feedback?: unknown
     contact?: unknown
+    [HONEYPOT_FIELD]?: unknown
+  }
+
+  // Looks exactly like a filed issue to the bot, so it has nothing to adapt to.
+  if (typeof honeypot === "string" && honeypot.trim()) {
+    return NextResponse.json({}, { status: 201 })
   }
 
   const feedback = typeof rawFeedback === "string" ? rawFeedback.trim() : ""
@@ -60,9 +83,14 @@ export async function POST(request: Request) {
   // Only `email` is read. A `contact.name` from a tab opened before the Name
   // field was removed (#70) is ignored, not rejected, so that note still files.
   const contactObject = typeof rawContact === "object" && rawContact !== null ? (rawContact as Record<string, unknown>) : {}
-  const contact: FeedbackContact = {
-    email: typeof contactObject.email === "string" ? contactObject.email : undefined,
+  const email = typeof contactObject.email === "string" ? contactObject.email.trim() : ""
+  if (email && (email.length > EMAIL_MAX_LENGTH || !EMAIL_PATTERN.test(email))) {
+    return NextResponse.json(
+      { error: "That email address doesn’t look right. Fix it, or leave it blank; your note is still here." },
+      { status: 400 },
+    )
   }
+  const contact: FeedbackContact = { email: email || undefined }
 
   const token = process.env.GITHUB_FEEDBACK_TOKEN?.trim()
   if (!token) {
@@ -90,6 +118,7 @@ export async function POST(request: Request) {
         title: FEEDBACK_ISSUE_TITLE,
         body: composeFeedbackBody(feedback, contact),
       }),
+      signal: AbortSignal.timeout(GITHUB_TIMEOUT_MS),
     })
   } catch (error) {
     console.error("[feedback] Network error reaching GitHub while filing feedback:", error)
@@ -102,8 +131,36 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: failure.message }, { status: failure.status })
   }
 
-  const issue = (await response.json()) as { html_url?: string }
+  // The issue exists once GitHub says 201, so an unreadable body still counts
+  // as sent: reporting a failure here would make the bookmaker file it twice.
+  const issue = (await response.json().catch(() => ({}))) as { html_url?: string }
   return NextResponse.json({ url: issue.html_url }, { status: 201 })
+}
+
+const GITHUB_TIMEOUT_MS = 10_000
+
+/**
+ * True for a JSON post from one of this server's own pages. Browsers send
+ * `Sec-Fetch-Site` on every request and no page can forge it; older ones
+ * that don't still send `Origin` on a cross-origin POST, so that is compared
+ * with the host the request was made to. A request with neither header
+ * didn't come from a browser page and is refused too.
+ */
+function isSameOriginJson(request: Request): boolean {
+  const contentType = request.headers.get("content-type")?.split(";")[0].trim().toLowerCase()
+  if (contentType !== "application/json") return false
+
+  const fetchSite = request.headers.get("sec-fetch-site")
+  if (fetchSite) return fetchSite === "same-origin"
+
+  const origin = request.headers.get("origin")
+  if (!origin) return false
+  const host = request.headers.get("host") ?? new URL(request.url).host
+  try {
+    return new URL(origin).host === host
+  } catch {
+    return false
+  }
 }
 
 const NOT_CONFIGURED_MESSAGE =

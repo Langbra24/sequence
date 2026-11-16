@@ -323,3 +323,12 @@ surprises). Newest entries at the bottom.
 - Favicon's nine squares are now all `#fafafa` on the zinc-800 tile, matching the teaser video's end card (Brandon). The faint zinc-600 squares are gone from the favicon only; the nav mark is unchanged.
 - `icon.svg` geometry snapped to the 32px grid (6px squares, 2px gaps, 5px inset) so it renders crisp at 16/32 device px. `favicon.ico` 16/32/48 are drawn pixel-exact per size (not downscaled), and `apple-icon.png` (180, full-bleed) is rendered from the SVG with Playwright's Chromium.
 - Verified: `npm run build`; `next start` serves all three `<link rel="icon"|"apple-touch-icon">` tags and the new SVG.
+
+## 2026-11-16 — feedback route hardening, security review S3/S4/S5/S12 (`claude/project-thread-iwsmma-feedback`)
+
+- **S3:** `/api/feedback` returns 403 unless the body is `application/json` and the request is same-origin (`Sec-Fetch-Site: same-origin`, or an `Origin` matching `Host` when that header is absent; neither → 403). A hidden honeypot input (`website`, off screen, `aria-hidden`, `tabIndex -1`) makes the route answer 201 and file nothing. Rate limiting is **not in code**: it needs a Vercel Firewall rule on `/api/feedback` (5 requests / 60 s per IP), set by the owner in the dashboard.
+- **S4:** email optional; if given, ≤ 254 chars and `x@y.z` shaped, else 400 with a message the toast shows. `composeFeedbackBody` quotes the feedback (`> ` per line), puts a zero-width joiner after `@` / `#` before an alphanumeric / digit (no mentions or cross-references), and puts the email in a code span without backticks or line breaks, so it stays copyable.
+- **S5:** the popover says feedback is posted publicly as a GitHub issue, with the email; placeholder "Email (optional, shown publicly)".
+- **S12:** 10 s `AbortSignal.timeout` on the GitHub call; a 201 with an unreadable body still returns 201.
+- Real Chromium sends `Sec-Fetch-Site: same-origin`, so the verifiers needed no header changes. `verify:feedback` gained a malformed-email scenario and Node-side checks for 403s and the honeypot; its email check now expects the code span.
+- Verified: `npm run verify`, `npm run verify:feedback` (17/17 checks), `npm run verify:small-fixes` pass.

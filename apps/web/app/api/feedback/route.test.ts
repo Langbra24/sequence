@@ -4,13 +4,18 @@ import { FEEDBACK_MAX_LENGTH, GITHUB_REPO } from "@/lib/feedback-url"
 
 import { POST } from "./route"
 
-function postRequest(body: unknown): Request {
+/** What a browser sends from one of the app's own pages. */
+const SAME_ORIGIN = { "Content-Type": "application/json", "Sec-Fetch-Site": "same-origin" }
+
+function postRequest(body: unknown, headers: Record<string, string> = SAME_ORIGIN): Request {
   return new Request("http://localhost/api/feedback", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    headers,
+    body: typeof body === "string" ? body : JSON.stringify(body),
   })
 }
+
+const created = () => new Response(JSON.stringify({ html_url: "https://x" }), { status: 201 })
 
 const originalToken = process.env.GITHUB_FEEDBACK_TOKEN
 const originalApiUrl = process.env.GITHUB_API_URL
@@ -59,12 +64,7 @@ describe("POST /api/feedback", () => {
   })
 
   it("400s on malformed JSON", async () => {
-    const request = new Request("http://localhost/api/feedback", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: "{not json",
-    })
-    const response = await POST(request)
+    const response = await POST(postRequest("{not json"))
     expect(response.status).toBe(400)
   })
 
@@ -109,7 +109,7 @@ describe("POST /api/feedback", () => {
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     const sentBody = JSON.parse(init.body as string) as { body: string }
-    expect(sentBody.body).toContain("Email: jane@example.com")
+    expect(sentBody.body).toContain("Email: `jane@example.com`")
   })
 
   it("ignores a stray contact.name from an old tab instead of rejecting it", async () => {
@@ -125,7 +125,127 @@ describe("POST /api/feedback", () => {
     const sentBody = JSON.parse(init.body as string) as { body: string }
     expect(sentBody.body).not.toContain("Jane Doe")
     expect(sentBody.body).not.toContain("Name:")
-    expect(sentBody.body).toContain("Email: jane@example.com")
+    expect(sentBody.body).toContain("Email: `jane@example.com`")
+  })
+
+  describe("only from the app's own pages", () => {
+    type Case = { name: string; headers: Record<string, string> }
+
+    it.each<Case>([
+      { name: "a cross-site page", headers: { "Content-Type": "application/json", "Sec-Fetch-Site": "cross-site" } },
+      { name: "a same-site subdomain", headers: { "Content-Type": "application/json", "Sec-Fetch-Site": "same-site" } },
+      { name: "a text/plain form post", headers: { "Content-Type": "text/plain", "Sec-Fetch-Site": "same-origin" } },
+      { name: "no Content-Type", headers: { "Sec-Fetch-Site": "same-origin" } },
+      { name: "a foreign Origin, no Sec-Fetch-Site", headers: { "Content-Type": "application/json", Origin: "https://evil.example" } },
+      { name: "an unparseable Origin", headers: { "Content-Type": "application/json", Origin: "null" } },
+      { name: "neither Sec-Fetch-Site nor Origin", headers: { "Content-Type": "application/json" } },
+    ])("403s, without calling GitHub, on $name", async ({ headers }) => {
+      const fetchMock = vi.fn()
+      vi.stubGlobal("fetch", fetchMock)
+
+      const response = await POST(postRequest({ feedback: "hi" }, headers))
+      const json = (await response.json()) as { error: string }
+
+      expect(response.status).toBe(403)
+      expect(json.error).toBe("Feedback can only be sent from Sequence itself.")
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+
+    it.each<Case>([
+      { name: "a matching Origin when Sec-Fetch-Site is absent", headers: { "Content-Type": "application/json", Origin: "http://localhost" } },
+      { name: "a JSON Content-Type with a charset", headers: { "Content-Type": "application/json; charset=utf-8", "Sec-Fetch-Site": "same-origin" } },
+    ])("accepts $name", async ({ headers }) => {
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(created()))
+      const response = await POST(postRequest({ feedback: "hi" }, headers))
+      expect(response.status).toBe(201)
+    })
+  })
+
+  it("answers a filled honeypot like a filed issue, and files nothing", async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal("fetch", fetchMock)
+
+    const response = await POST(postRequest({ feedback: "buy now", website: "https://spam.example" }))
+
+    expect(response.status).toBe(201)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it("files normally when the honeypot is empty", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(created())
+    vi.stubGlobal("fetch", fetchMock)
+
+    const response = await POST(postRequest({ feedback: "hi", website: "" }))
+
+    expect(response.status).toBe(201)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    { name: "has no @", email: "jane.example.com" },
+    { name: "has no dot in the domain", email: "jane@example" },
+    { name: "has a space", email: "jane doe@example.com" },
+    { name: "has a newline", email: "jane@example.com\n@everyone" },
+    { name: "is over 254 characters", email: `${"a".repeat(243)}@example.com` },
+  ])("400s, without calling GitHub, on an email that $name", async ({ email }) => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal("fetch", fetchMock)
+
+    const response = await POST(postRequest({ feedback: "hi", contact: { email } }))
+    const json = (await response.json()) as { error: string }
+
+    expect(response.status).toBe(400)
+    expect(json.error).toBe("That email address doesn’t look right. Fix it, or leave it blank; your note is still here.")
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it("accepts a 254-character email, and treats a blank one as not given", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(created())
+    vi.stubGlobal("fetch", fetchMock)
+    const longest = `${"a".repeat(242)}@example.com`
+    expect(longest).toHaveLength(254)
+
+    expect((await POST(postRequest({ feedback: "hi", contact: { email: longest } }))).status).toBe(201)
+    expect((await POST(postRequest({ feedback: "hi", contact: { email: "   " } }))).status).toBe(201)
+
+    const blankBody = (JSON.parse(fetchMock.mock.calls[1][1].body as string) as { body: string }).body
+    expect(blankBody).not.toContain("Email:")
+  })
+
+  it("neutralises @mentions and #references in the filed issue", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(created())
+    vi.stubGlobal("fetch", fetchMock)
+
+    await POST(postRequest({ feedback: "cc @octocat and @github/security, see torvalds/linux#1" }))
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    const sentBody = (JSON.parse(init.body as string) as { body: string }).body
+    expect(sentBody).not.toMatch(/@[A-Za-z0-9]/)
+    expect(sentBody).not.toMatch(/#\d/)
+    expect(sentBody.replaceAll("\u200D", "")).toContain("cc @octocat and @github/security, see torvalds/linux#1")
+  })
+
+  it("gives the GitHub call a 10-second timeout, and 502s when it fires", async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new DOMException("The operation was aborted due to timeout", "TimeoutError"))
+    vi.stubGlobal("fetch", fetchMock)
+
+    const response = await POST(postRequest({ feedback: "hi" }))
+    const json = (await response.json()) as { error: string }
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(init.signal).toBeInstanceOf(AbortSignal)
+    expect(response.status).toBe(502)
+    expect(json.error).toBe("Couldn't reach GitHub. Please try again in a moment.")
+    expect(loggedError()).toMatch(/TimeoutError/)
+  })
+
+  it("still reports success when GitHub's 201 body can't be parsed, so a retry doesn't file twice", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("<html>not json", { status: 201 })))
+
+    const response = await POST(postRequest({ feedback: "hi" }))
+
+    expect(response.status).toBe(201)
+    expect(await response.json()).toEqual({})
   })
 
   const setupProblem =

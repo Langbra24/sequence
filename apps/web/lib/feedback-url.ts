@@ -43,6 +43,16 @@ const BODY_HEADER =
 const BODY_FOOTER =
   "\n\n---\nSubmitted through Sequence's in-app feedback control. No project name, filenames, or other project state were included."
 
+/** The hidden field in the feedback control that only a bot fills in. The
+ *  route answers as if it filed the issue and files nothing. */
+export const HONEYPOT_FIELD = "website"
+
+/** The longest address SMTP allows (RFC 5321), and a shape check that only
+ *  catches the obvious typos; the maintainer replies by hand, so a strict
+ *  RFC 5322 parse would buy nothing. Shared by the route's validation. */
+export const EMAIL_MAX_LENGTH = 254
+export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 /**
  * The exact composed issue body: static template boilerplate, the
  * bookmaker's own text, an optional contact line if they gave an email, and
@@ -51,10 +61,32 @@ const BODY_FOOTER =
  * there is nothing else it could include (KTD9). A blank/whitespace-only
  * `email` is treated as not given, same as omitting `contact` entirely — a field the user focused and left empty shouldn't produce an
  * empty "Email:" line in the filed issue.
+ *
+ * The issue is filed under the bot's name, so nothing a stranger types may
+ * make it act: the feedback is quoted (a fake "Email:" line or `---` stays
+ * inside the quote), and a zero-width joiner after `@` and `#` stops GitHub
+ * turning `@user`, `@org/team` or `owner/repo#1` into a notification or a
+ * cross-reference, while the text still reads the same. The email goes in a
+ * code span instead, where GitHub renders no mentions or markdown, so the
+ * maintainer can still copy it unaltered; backticks and line breaks are
+ * dropped so it can't close the span or start a line of its own.
  */
 export function composeFeedbackBody(feedback: string, contact?: FeedbackContact): string {
-  const email = contact?.email?.trim()
-  const contactBlock = email ? `\n\n---\nEmail: ${email}` : ""
+  const email = contact?.email?.replace(/[`\r\n]/g, "").trim()
+  const contactBlock = email ? `\n\n---\nEmail: \`${email}\`` : ""
 
-  return `${BODY_HEADER}${feedback}${contactBlock}${BODY_FOOTER}`
+  return `${BODY_HEADER}${quote(neutraliseReferences(feedback))}${contactBlock}${BODY_FOOTER}`
+}
+
+const ZERO_WIDTH_JOINER = "\u200D"
+
+function neutraliseReferences(text: string): string {
+  return text.replace(/@(?=[A-Za-z0-9])/g, `@${ZERO_WIDTH_JOINER}`).replace(/#(?=\d)/g, `#${ZERO_WIDTH_JOINER}`)
+}
+
+function quote(text: string): string {
+  return text
+    .split(/\r?\n/)
+    .map((line) => (line ? `> ${line}` : ">"))
+    .join("\n")
 }

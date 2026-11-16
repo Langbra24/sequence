@@ -7,7 +7,7 @@ import { Popover } from "@base-ui/react/popover"
 import { Button } from "@/components/ui/button"
 import { useToastManager } from "@/components/ui/toast"
 import { cn, stagger } from "@/lib/utils"
-import { FEEDBACK_MAX_LENGTH } from "@/lib/feedback-url"
+import { EMAIL_MAX_LENGTH, FEEDBACK_MAX_LENGTH, HONEYPOT_FIELD } from "@/lib/feedback-url"
 
 /**
  * Bottom-left feedback control (R23). POSTs to `app/api/feedback/route.ts`,
@@ -33,7 +33,13 @@ import { FEEDBACK_MAX_LENGTH } from "@/lib/feedback-url"
  *
  * `email` is optional and folds into the issue body — see
  * `composeFeedbackBody`. It is the only contact field: the filed issue is
- * public, so there is no Name field (#70), just enough for a reply.
+ * public, so there is no Name field (#70), just enough for a reply. The
+ * copy says so plainly: the description and the email placeholder both say
+ * it is shown publicly.
+ *
+ * A honeypot input (`HONEYPOT_FIELD`) sits off screen, out of the tab order
+ * and the accessibility tree, so only a bot filling every field reaches it;
+ * the route then answers "sent" and files nothing.
  *
  * The 2,000-character cap is enforced in the textarea itself (`maxLength`)
  * with a live counter, not just at submit time, so typing past the limit is
@@ -54,6 +60,7 @@ import { FEEDBACK_MAX_LENGTH } from "@/lib/feedback-url"
 export function FeedbackControl() {
   const [open, setOpen] = useState(false)
   const [email, setEmail] = useState("")
+  const [honeypot, setHoneypot] = useState("")
   const [text, setText] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const toastManager = useToastManager()
@@ -71,7 +78,7 @@ export function FeedbackControl() {
     // `.add()` calls itself.
     try {
       await toastManager.promise(
-        submitFeedback({ feedback: text, contact: { email } }),
+        submitFeedback({ feedback: text, contact: { email }, [HONEYPOT_FIELD]: honeypot }),
         {
           loading: { title: "Sending feedback…", type: "loading" },
           success: {
@@ -118,7 +125,8 @@ export function FeedbackControl() {
             <div className="stagger-section" style={stagger(0)}>
               <Popover.Title className="text-sm font-medium">Send feedback</Popover.Title>
               <Popover.Description className="pt-0.5 pb-2 text-xs text-muted-foreground">
-                The more detail, the better: what you were doing, what you expected, and what happened.
+                Posted publicly as a GitHub issue, with your email if you add one. The more detail, the better:
+                what you were doing, what you expected, and what happened.
               </Popover.Description>
             </div>
 
@@ -129,12 +137,24 @@ export function FeedbackControl() {
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                placeholder="Email (optional)"
-                aria-label="Email (optional)"
+                placeholder="Email (optional, shown publicly)"
+                aria-label="Email (optional, shown publicly)"
+                maxLength={EMAIL_MAX_LENGTH}
                 disabled={submitting}
                 className="w-full rounded-lg border bg-background p-2 text-sm outline-none focus-ring disabled:opacity-50"
               />
             </div>
+
+            <input
+              type="text"
+              name={HONEYPOT_FIELD}
+              value={honeypot}
+              onChange={(event) => setHoneypot(event.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden
+              className="sr-only"
+            />
 
             <textarea
               value={text}
@@ -187,7 +207,7 @@ const UNREACHABLE_MESSAGE = "Couldn't reach Sequence's server. Check your connec
  *  (see `describeGitHubFailure` in the route), so the toast shows it as is. */
 class FeedbackError extends Error {}
 
-async function submitFeedback(payload: { feedback: string; contact: { email: string } }) {
+async function submitFeedback(payload: { feedback: string; contact: { email: string }; [HONEYPOT_FIELD]: string }) {
   const response = await fetch("/api/feedback", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
