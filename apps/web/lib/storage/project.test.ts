@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { Asset, Page, PageSize, Project } from "@sequence/core"
 
 /**
@@ -183,6 +183,44 @@ describe("loadProject", () => {
   })
 })
 
+describe("saveProjectDebounced", () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    dbStub.put.mockClear()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it("collapses a burst of updates into one write of the latest project", async () => {
+    const { saveProjectDebounced } = await import("./project")
+    const onError = vi.fn()
+    saveProjectDebounced({ ...currentRecord(), name: "First" }, onError)
+    saveProjectDebounced({ ...currentRecord(), name: "Second" }, onError)
+
+    await vi.runAllTimersAsync()
+
+    expect(dbStub.put).toHaveBeenCalledTimes(1)
+    expect(dbStub.put).toHaveBeenCalledWith("project", expect.objectContaining({ name: "Second" }), "current")
+    expect(onError).not.toHaveBeenCalled()
+  })
+
+  // The browser holds the only copy: a failed background write has to reach
+  // the caller, not vanish.
+  it("hands a failed write to onError", async () => {
+    const { saveProjectDebounced } = await import("./project")
+    const failure = new Error("disk full")
+    dbStub.put.mockRejectedValueOnce(failure)
+    const onError = vi.fn()
+    saveProjectDebounced(currentRecord(), onError)
+
+    await vi.runAllTimersAsync()
+
+    expect(onError).toHaveBeenCalledWith(failure)
+  })
+})
+
 describe("flushPendingSave", () => {
   beforeEach(() => {
     flushCalls.length = 0
@@ -192,7 +230,7 @@ describe("flushPendingSave", () => {
   // must put and commit inside the `pagehide` handler itself.
   it("writes and commits the pending project synchronously", async () => {
     const { flushPendingSave, saveProjectDebounced } = await import("./project")
-    saveProjectDebounced({ ...currentRecord(), name: "Renamed" })
+    saveProjectDebounced({ ...currentRecord(), name: "Renamed" }, () => undefined)
 
     flushPendingSave()
 

@@ -82,12 +82,20 @@ export function Introduction() {
           Built in the open by <em className="font-medium text-foreground not-italic">Brandon Lang</em>.
         </p>
 
-        <p className="stagger-section text-sm leading-relaxed text-muted-foreground" style={stagger(2)}>
-          It&apos;s early, and it&apos;ll keep changing shape based on what people actually
-          building books with it need. Import some photographs to get started, and use the
-          feedback control in this corner any time something feels wrong, missing, or confusing —
-          that&apos;s how this gets built.
-        </p>
+        {/* The storage line shares the "why" beat's delay rather than adding
+            a fifth, so the focused button doesn't reveal any later. */}
+        <div className="stagger-section flex flex-col gap-3" style={stagger(2)}>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            It&apos;s early, and it&apos;ll keep changing shape based on what people actually
+            building books with it need. Import some photographs to get started, and use the
+            feedback control in this corner any time something feels wrong, missing, or confusing —
+            that&apos;s how this gets built.
+          </p>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Your work is saved only in this browser on this computer. Clearing your browser’s site
+            data deletes it.
+          </p>
+        </div>
 
         <Button
           ref={getStartedRef}
@@ -107,9 +115,20 @@ export function Introduction() {
  *  or the project has content. */
 export function IntroductionReopenButton() {
   const showIntroduction = useEditorStore((state) => state.showIntroduction)
+  const showing = useIntroductionShowing()
+  const wasShowing = useRef(showing)
+  const ref = useRef<HTMLButtonElement>(null)
+
+  // The focused "Get started" or X unmounts with the overlay, which would
+  // drop focus to <body>. Land it here instead: the way back in. Runs after
+  // the commit that lifts `inert` off this row, so the button can take it.
+  useEffect(() => {
+    if (wasShowing.current && !showing) ref.current?.focus()
+    wasShowing.current = showing
+  }, [showing])
 
   return (
-    <Button variant="secondary" size="icon-sm" aria-label="About Sequence" onClick={showIntroduction}>
+    <Button ref={ref} variant="secondary" size="icon-sm" aria-label="About Sequence" onClick={showIntroduction}>
       <BookOpenIcon />
     </Button>
   )
@@ -121,9 +140,10 @@ export function useIntroductionShowing(): boolean {
   // Before hydration the store holds a placeholder empty project, which says
   // nothing about whether this bookmaker has a book (#59).
   const hydrated = useEditorStore((state) => state.hydrated)
+  const open = useEditorStore((state) => state.introductionOpen)
   const dismissed = useEditorStore((state) => state.introductionDismissed)
   const isEmptyProject = useEditorStore(
     (state) => state.project.frames.length === 0 && state.project.assets.length === 0,
   )
-  return hydrated && !dismissed && isEmptyProject
+  return hydrated && (open || (!dismissed && isEmptyProject))
 }
