@@ -216,24 +216,10 @@ function fitChromeToZoom(object: ScreenChrome, zoom: number) {
   object.setCoords()
 }
 
-/** Snaps a frame onto its grid slot. Tweens with ease-in-out (it is already
- *  on screen, moving), unless the user asked for reduced motion: then it
- *  lands there in one render. Read at tween time, not once on mount, so
- *  changing the OS setting takes effect without a reload. */
-function snapFrameTo(
-  fabric: typeof import("fabric"),
-  object: FabricObject,
-  to: { left: number; top: number },
-  duration: number,
-  render: () => void,
-) {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    object.set(to)
-    object.setCoords()
-    render()
-    return
-  }
-  object.animate(to, { duration, easing: fabric.util.ease.easeInOutQuad, onChange: render })
+/** Moves one object by (dx, dy) scene units, hit area included. */
+function nudge(object: FabricObject, dx: number, dy: number) {
+  object.set({ left: (object.left ?? 0) + dx, top: (object.top ?? 0) + dy })
+  object.setCoords()
 }
 
 export interface CanvasControls {
@@ -457,6 +443,16 @@ export function useFabricCanvas(options: Options) {
    * whenever their target happened to still be selected.
    */
   const draggingRef = useRef<FabricObject | null>(null)
+  /** How far each page's drawing (its print guides, cover badge, photos and
+   *  text, and its rect while gliding) sits from its grid slot: it follows a
+   *  dragged page, then glides home with it. Cleared by `syncFrames`, which
+   *  puts everything back on its slot. */
+  const frameOffsetsRef = useRef(new Map<string, { dx: number; dy: number }>())
+  /** A page dropped onto a new slot: where its center was let go. The store
+   *  reorder that follows lands it on the new slot (`syncFrames`), which turns
+   *  this into `armedGlideRef` for the next render to glide from. */
+  const pendingGlideRef = useRef<{ frameId: string; x: number; y: number } | null>(null)
+  const armedGlideRef = useRef<{ frameId: string; dx: number; dy: number } | null>(null)
 
   /**
    * Suppresses the `selection:cleared` handler below while a photo or text
@@ -796,9 +792,85 @@ export function useFabricCanvas(options: Options) {
       // ends in a render, so fitting the screen-sized chrome here covers
       // them all without each one having to remember to. A handful of
       // objects, so doing it every render costs nothing worth guarding.
+      /** Moves a page's whole drawing by (dx, dy): guides, cover badge,
+       *  photos and text, and the rect itself unless Fabric is already
+       *  moving it under the pointer. */
+      function shiftFrame(frameId: string, dx: number, dy: number, withRect: boolean) {
+        const rect = framesRef.current.get(frameId)
+        if (withRect && rect) nudge(rect, dx, dy)
+        const overlay = overlaysRef.current.get(frameId)
+        if (overlay) {
+          nudge(overlay.bleed, dx, dy)
+          nudge(overlay.margin, dx, dy)
+        }
+        for (const element of elementsRef.current.values()) {
+          if (element.frameId === frameId) nudge(element, dx, dy)
+        }
+        const badge = coverBadgesRef.current.get(frameId)
+        if (badge) {
+          badge.screenAnchor = { ...badge.screenAnchor, x: badge.screenAnchor.x + dx, y: badge.screenAnchor.y + dy }
+          fitChromeToZoom(badge, canvasRef.current?.getZoom() ?? 1)
+        }
+        const offset = frameOffsetsRef.current.get(frameId) ?? { dx: 0, dy: 0 }
+        frameOffsetsRef.current.set(frameId, { dx: offset.dx + dx, dy: offset.dy + dy })
+      }
+
+      /** Glides a page's whole drawing from its offset back onto its slot,
+       *  as one tween: ease-in-out (it is already on screen, moving), under
+       *  300ms, Fabric's own tween rather than a hand-rolled RAF loop. Under
+       *  reduced motion it lands in one render; read here, not once on mount,
+       *  so changing the OS setting takes effect without a reload. Only a
+       *  pointer drop glides: a reflow from the store snaps (`syncFrames`). */
+      function glideFrameHome(frameId: string, duration: number) {
+        const rect = framesRef.current.get(frameId)
+        const offset = frameOffsetsRef.current.get(frameId)
+        if (!rect || !offset) return
+        fabric.runningAnimations.cancelByTarget(rect)
+
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          shiftFrame(frameId, -offset.dx, -offset.dy, true)
+          frameOffsetsRef.current.delete(frameId)
+          canvasRef.current?.requestRenderAll()
+          return
+        }
+
+        // Steps by difference, so a resync mid-glide (which cancels it) and
+        // a grab mid-glide both start from wherever the page really is.
+        let progress = 1
+        const step = (value: number) => {
+          shiftFrame(frameId, (value - progress) * offset.dx, (value - progress) * offset.dy, true)
+          progress = value
+          canvasRef.current?.requestRenderAll()
+        }
+        fabric.util.animate({
+          target: rect,
+          startValue: 1,
+          endValue: 0,
+          duration,
+          easing: fabric.util.ease.easeInOutQuad,
+          onChange: step,
+          onComplete: (value) => {
+            step(value)
+            frameOffsetsRef.current.delete(frameId)
+          },
+        })
+      }
+
       canvas.on("before:render", () => {
         const target = canvasRef.current
         if (!target) return
+
+        // A dropped page has just been put on its new slot by `syncFrames`
+        // (and its contents by `syncFrameElements`, in the same task). Move
+        // it all back to where it was let go before this frame draws, then
+        // glide it home together.
+        const glide = armedGlideRef.current
+        if (glide) {
+          armedGlideRef.current = null
+          shiftFrame(glide.frameId, glide.dx, glide.dy, true)
+          glideFrameHome(glide.frameId, 250)
+        }
+
         const zoom = target.getZoom()
         const buttons = pageButtonsRef.current
         if (buttons) {
@@ -1273,6 +1345,21 @@ export function useFabricCanvas(options: Options) {
         const targetIndex = nearestFrameIndex(layouts, { x: placed.left ?? 0, y: placed.top ?? 0 })
         const target = layouts[targetIndex]
         if (target) showInsertionIndicator(target)
+
+        // The page's guides, badge, photos and text come along with it. Not
+        // for a photo or text box dragged on its page, which also has a
+        // `frameId`.
+        const own = layouts.find((layout) => layout.frameId === placed.frameId)
+        if (own && !("elementId" in placed)) {
+          fabric.runningAnimations.cancelByTarget(placed)
+          const offset = frameOffsetsRef.current.get(placed.frameId) ?? { dx: 0, dy: 0 }
+          shiftFrame(
+            placed.frameId,
+            (placed.left ?? 0) - (own.bounds.x + own.bounds.width / 2) - offset.dx,
+            (placed.top ?? 0) - (own.bounds.y + own.bounds.height / 2) - offset.dy,
+            false,
+          )
+        }
       })
 
       /* Write position and scale back to the store when a gesture ends —
@@ -1381,25 +1468,17 @@ export function useFabricCanvas(options: Options) {
           const to = nearestFrameIndex(layouts, { x: placed.left ?? 0, y: placed.top ?? 0 })
 
           if (to !== from) {
-            // The frame snaps onto its new slot via the reflow effect
+            // The frame lands on its new slot via the reflow effect
             // (syncFrames), driven by the store update this triggers — not
             // here, so there is exactly one place that computes frame
-            // positions.
+            // positions. It glides there from this drop point.
+            pendingGlideRef.current = { frameId: placed.frameId, x: placed.left ?? 0, y: placed.top ?? 0 }
             handlers.current.onReorderFrame(from, to)
           } else {
             // Dropped back in the same slot: the store doesn't change, so
-            // syncFrames' reflow won't run for this frame. Snap it onto the
-            // grid directly so it doesn't rest wherever the pointer let go.
-            const own = layouts[from]
-            if (own) {
-              snapFrameTo(
-                fabric,
-                placed,
-                { left: own.bounds.x + own.bounds.width / 2, top: own.bounds.y + own.bounds.height / 2 },
-                200,
-                () => canvasRef.current?.requestRenderAll(),
-              )
-            }
+            // syncFrames' reflow won't run for this frame. Glide it home
+            // directly so it doesn't rest wherever the pointer let go.
+            glideFrameHome(placed.frameId, 200)
           }
         }
       })
@@ -1707,6 +1786,10 @@ export function useFabricCanvas(options: Options) {
     const coverBadges = coverBadgesRef.current
     const liveSpreadBoxes = spreadBoxesRef.current
     const frameById = new Map(currentFrames.map((frame) => [frame.id, frame]))
+    // Everything below puts each page's drawing back on its slot.
+    frameOffsetsRef.current.clear()
+    const glide = pendingGlideRef.current
+    pendingGlideRef.current = null
 
     // Remove frame objects whose frame no longer exists.
     for (const [frameId, object] of live) {
@@ -1971,16 +2054,21 @@ export function useFabricCanvas(options: Options) {
       // Don't fight the object currently under the user's pointer.
       if (existing === draggingRef.current) continue
 
+      // A store-driven reflow (undo/redo, Cover, Add page, Position, the
+      // keyboard) snaps: a glide would move the page under contents that
+      // already sit on their new slots. A dropped page is the exception,
+      // glided by the next render (see `armedGlideRef`).
+      fabric.runningAnimations.cancelByTarget(existing)
+      if (glide?.frameId === layout.frameId) {
+        armedGlideRef.current = { frameId: layout.frameId, dx: glide.x - centerX, dy: glide.y - centerY }
+      }
+
       const dx = Math.abs((existing.left ?? 0) - centerX)
       const dy = Math.abs((existing.top ?? 0) - centerY)
       if (dx < 0.5 && dy < 0.5) continue
 
-      // Motion convention (see the `animations` skill): under 300ms,
-      // ease-in-out, using Fabric's own tween rather than a hand-rolled RAF
-      // loop; none under reduced motion.
-      snapFrameTo(fabric, existing, { left: centerX, top: centerY }, 250, () =>
-        canvasRef.current?.requestRenderAll(),
-      )
+      existing.set({ left: centerX, top: centerY })
+      existing.setCoords()
     }
 
     // Run after every frame rect above has been added/updated, so a newly
