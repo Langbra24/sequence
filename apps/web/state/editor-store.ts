@@ -251,15 +251,15 @@ function newId(prefix: string): string {
 }
 
 export const useEditorStore = create<EditorState>((set, get) => {
+  const reportSaveError = (error: unknown) =>
+    set({ lastError: error instanceof Error ? error.message : "Could not save" })
+
   /** Persist after a mutation that cannot orphan a blob. */
-  const persistLater = (project: Project) => saveProjectDebounced(project)
+  const persistLater = (project: Project) => saveProjectDebounced(project, reportSaveError)
 
   /** Persist immediately — used when blobs were just written, since the project
    *  record is what addresses them. */
-  const persistNow = (project: Project) =>
-    saveProject(project).catch((error: unknown) =>
-      set({ lastError: error instanceof Error ? error.message : "Could not save" }),
-    )
+  const persistNow = (project: Project) => saveProject(project).catch(reportSaveError)
 
   const textElement = (frameId: string, elementId: string) =>
     get()

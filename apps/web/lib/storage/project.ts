@@ -44,8 +44,12 @@ export async function saveProject(project: Project): Promise<void> {
  * one to IndexedDB would be the wrong trade. Only placement and edit mutations
  * come through here — anything that creates or destroys a blob saves
  * immediately via `saveProject`.
+ *
+ * The write happens after the caller has moved on, so a failure is handed to
+ * `onError` rather than thrown: the browser holds the only copy of the work,
+ * and a save that fails silently is lost work the user never hears about.
  */
-export function saveProjectDebounced(project: Project): void {
+export function saveProjectDebounced(project: Project, onError: (error: unknown) => void): void {
   pending = project
   if (timer) clearTimeout(timer)
 
@@ -53,7 +57,7 @@ export function saveProjectDebounced(project: Project): void {
     timer = null
     const snapshot = pending
     pending = null
-    if (snapshot) void saveProject(snapshot).catch(() => undefined)
+    if (snapshot) void saveProject(snapshot).catch(onError)
   }, SAVE_DEBOUNCE_MS)
 }
 
