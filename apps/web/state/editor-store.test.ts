@@ -304,3 +304,19 @@ describe("text color undo (#27)", () => {
     expect(depth()).toBe(before)
   })
 })
+
+describe("introduction", () => {
+  // The reopen control has to work once the book has content, where
+  // clearing `introductionDismissed` alone changes nothing.
+  it("opens on request and closes on dismissal, whatever the project holds", () => {
+    useEditorStore.getState().addFrame(A5_PORTRAIT)
+    useEditorStore.getState().dismissIntroduction()
+
+    useEditorStore.getState().showIntroduction()
+    expect(useEditorStore.getState().introductionOpen).toBe(true)
+
+    useEditorStore.getState().dismissIntroduction()
+    expect(useEditorStore.getState().introductionOpen).toBe(false)
+    expect(useEditorStore.getState().introductionDismissed).toBe(true)
+  })
+})

@@ -97,6 +97,10 @@ interface EditorState {
    *  means dismissal is never the only way back, so nothing is lost by not
    *  persisting this to IndexedDB. */
   introductionDismissed: boolean
+  /** Set by the reopen control (R32/AE9), cleared on dismissal. The overlay
+   *  shows on `introductionOpen || (!introductionDismissed && isEmpty)`, so
+   *  reopening works once the book has content too. UI-only, like the above. */
+  introductionOpen: boolean
 
   hydrate: () => Promise<void>
   /** Pops the most recent `UndoCommand` and runs its `undo` side, then pushes
@@ -323,6 +327,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
     importProgress: null,
     lastError: null,
     introductionDismissed: false,
+    introductionOpen: false,
 
     hydrate: async () => {
       if (get().hydrated) return
@@ -1132,9 +1137,9 @@ export const useEditorStore = create<EditorState>((set, get) => {
     toggleLeftPanel: () => set((state) => ({ leftPanelOpen: !state.leftPanelOpen })),
     toggleRightPanel: () => set((state) => ({ rightPanelOpen: !state.rightPanelOpen })),
     dismissError: () => set({ lastError: null }),
-    dismissIntroduction: () => set({ introductionDismissed: true }),
+    dismissIntroduction: () => set({ introductionDismissed: true, introductionOpen: false }),
     // Reopening (R32/AE9) is not tied to project state — a returning user with
     // content can still bring it back on demand.
-    showIntroduction: () => set({ introductionDismissed: false }),
+    showIntroduction: () => set({ introductionOpen: true }),
   }
 })
