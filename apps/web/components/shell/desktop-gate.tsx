@@ -18,7 +18,7 @@ function subscribe(onChange: () => void) {
  * project and the canvas.
  *
  * The server snapshot is "wide", so a desktop reload paints the shell from
- * the server HTML with no flash; below 1024px CSS hides that HTML until
+ * the server HTML with no flash; below 768px CSS hides that HTML until
  * hydration unmounts it. AppShell and the canvas check `isWideViewport()`
  * before loading anything, because their mount effects run in that first
  * hydration commit, before this re-renders.

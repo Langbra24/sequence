@@ -9,8 +9,15 @@ import path from "node:path"
 import { launchBrowser } from "./browser.mjs"
 import { repoRoot } from "./server.mjs"
 
-/** Comfortably above the app's 1024px desktop-only breakpoint. */
-export const DESKTOP_VIEWPORT = { width: 1440, height: 900 }
+/** Comfortably above the app's 768px small-screen breakpoint and the 1024px
+ *  one where the panels slim down. `SEQUENCE_VIEWPORT=768x1024` overrides it,
+ *  e.g. to screenshot the iPad-portrait layout. */
+export const DESKTOP_VIEWPORT = parseViewport(process.env.SEQUENCE_VIEWPORT) ?? { width: 1440, height: 900 }
+
+function parseViewport(value) {
+  const match = /^(\d+)x(\d+)$/.exec(value ?? "")
+  return match ? { width: Number(match[1]), height: Number(match[2]) } : null
+}
 
 const photosDir = path.join(repoRoot, "scripts/verify/fixtures/photos")
 export const FIXTURE_PHOTOS = readdirSync(photosDir)

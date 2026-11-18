@@ -30,7 +30,7 @@ todos/                  triage and review findings
 
 ## Scope decisions already made
 
-- **The product app is desktop-only for v1.** A canvas tool with left/right panels has no sensible mobile layout, and no breakpoint strategy has been designed. The app renders a plain notice below 1024px. The *marketing site* must still be responsive.
+- **The product app is desktop-only for v1.** A canvas tool with left/right panels has no sensible mobile layout, and no breakpoint strategy has been designed. The app renders a plain notice below 768px (an iPad in portrait gets the editor, with slimmer panels below 1024px; phones get the notice). The *marketing site* must still be responsive.
 - **Canvas reflows, it does not float.** Panels are grid columns that collapse to zero width; the canvas region genuinely resizes. Never implement panels as overlays on a fixed-size canvas.
 - **The shell frame is stable.** The top nav never moves or hides.
 - Right-click / context-menu canvas interactions are deferred, deliberately.

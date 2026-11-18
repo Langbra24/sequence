@@ -117,7 +117,7 @@ export function InspectorPanel() {
   }
 
   return (
-    <aside className="flex h-full w-72 flex-col border-l bg-background">
+    <aside className="flex h-full w-60 flex-col lg:w-72 border-l bg-background">
       <ScrollArea className="min-h-0 flex-1">
         {/* Section dividers bleed through the column's `px-3` to run edge to
             edge (issue #25). Set here once for every inspector state, not on

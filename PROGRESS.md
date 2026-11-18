@@ -356,3 +356,12 @@ surprises). Newest entries at the bottom.
 - `DesktopGate` (`components/shell/desktop-gate.tsx`) mounts `AppShell` only at `(min-width: 1024px)`, via `useSyncExternalStore` with a "wide" server snapshot, so desktop reloads still paint the shell from server HTML. Below 1024px its window shortcuts no longer edit a book nobody can see.
 - `AppShell`'s hydrate effect and the Fabric import check `isWideViewport()` (`lib/viewport.ts`) first, because they run in the first hydration commit before the gate unmounts: a narrow load opens no IndexedDB and fetches no Fabric chunk. Widening mounts the editor; narrowing unmounts it again.
 - Verified: `npm run verify`, `verify:polish`, `e2e`, `verify:escape-selection` pass; a 900px Playwright load shows the notice, no `sequence` database and no Fabric chunk, then mounts at 1440px and unmounts back at 900px with no errors.
+
+## 2026-11-18 — iPad portrait gets the editor (768px cutoff, slimmer panels below 1024px)
+
+- The small-screen cutoff is 768px (`lib/viewport.ts`, `md:` in `app/page.tsx`): iPads in portrait (768/810/820/834) load the editor; phones still get the notice.
+- Below 1024px the panels slim down: left 13rem (lg 15rem), right 15rem (lg 18rem), via `--left-panel-width`/`--right-panel-width` set per breakpoint on the shell grid and matched by `w-52 lg:w-60` / `w-60 lg:w-72`. At 768 the canvas keeps 320px.
+- `MIN_ZOOM` 0.05 → 0.02 so fit-to-view can show a whole book in a 320px canvas (it was clamping at 5% and clipping the pages).
+- Book view grid: `minmax(min(220px,100%),1fr)`, so one preview column fits a narrow canvas instead of running under the right panel. `verify:a11y-names` locates the grid by that class.
+- `SEQUENCE_VIEWPORT=768x1024 node scripts/verify/screenshot.mjs` captures every scene at another size.
+- Verified: `npm run verify`, `verify:polish`, `verify:separators`, `verify:a11y-names`, `verify:book-overview`, `verify:print-guides`, `verify:canvas-chrome`, `verify:tabs`, `verify:motion`, `e2e` pass (desktop 1440); all 14 screenshot scenes at 768×1024 render without errors.

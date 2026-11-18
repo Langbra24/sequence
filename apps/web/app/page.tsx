@@ -4,10 +4,10 @@ import { DesktopOnlyNotice } from "@/components/shell/desktop-only-notice"
 export default function Page() {
   return (
     <>
-      <div className="hidden lg:block">
+      <div className="hidden md:block">
         <DesktopGate />
       </div>
-      <DesktopOnlyNotice className="lg:hidden" />
+      <DesktopOnlyNotice className="md:hidden" />
     </>
   )
 }

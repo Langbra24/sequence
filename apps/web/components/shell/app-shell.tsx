@@ -14,8 +14,11 @@ import { registerSaveFlush } from "@/lib/storage/project"
 import { isWideViewport } from "@/lib/viewport"
 import { useEditorStore } from "@/state/editor-store"
 
-const LEFT_PANEL_WIDTH = "15rem" // 240px — matches LayersPanel's w-60
-const RIGHT_PANEL_WIDTH = "18rem" // 288px — matches InspectorPanel's w-72
+// Set per breakpoint on the grid below, and matched by LayersPanel's
+// w-52/lg:w-60 and InspectorPanel's w-60/lg:w-72. Under 1024px (an iPad in
+// portrait) both panels slim down so the canvas keeps a usable width.
+const LEFT_PANEL_WIDTH = "var(--left-panel-width)" // 208px, 240px from lg
+const RIGHT_PANEL_WIDTH = "var(--right-panel-width)" // 240px, 288px from lg
 
 /**
  * The fixed frame.
@@ -51,7 +54,7 @@ export function AppShell() {
         <TopNav />
 
         <div
-          className="relative grid min-h-0 flex-1 transition-[grid-template-columns] duration-200 ease-out motion-reduce:transition-none"
+          className="relative grid min-h-0 flex-1 [--left-panel-width:13rem] [--right-panel-width:15rem] lg:[--left-panel-width:15rem] lg:[--right-panel-width:18rem] transition-[grid-template-columns] duration-200 ease-out motion-reduce:transition-none"
           style={{
             gridTemplateColumns: [
               leftPanelOpen ? LEFT_PANEL_WIDTH : "0rem",
