@@ -350,3 +350,9 @@ surprises). Newest entries at the bottom.
 - **Metadata:** `metadataBase` is `SITE_URL` (`lib/site.ts`, https://sequencebook.com), with openGraph, `twitter.card`, and a viewport with themeColor `#27272a` (= `--background`) and colorScheme dark. Also added `robots.ts` and `sitemap.ts`. **Social images:** drop `opengraph-image.png` (1200×630) and `twitter-image.png` into `apps/web/app/` and Next emits the tags. Optional `*.alt.txt` files sit beside them. No placeholder images exist yet.
 - Verified: `npm run verify`, `npm run e2e`, `npm run verify:polish` pass; `curl -I` shows the headers and no X-Powered-By; robots.txt/sitemap.xml 200. Screenshots are in `/mnt/project-files/polish-review/site-setup/`.
 - Next step: once a production session runs clean under the report-only CSP, promote it to the enforced header.
+
+## 2026-11-18 — editor not mounted below desktop width (polish item 14, `claude/project-thread-iwsmma-mobile`)
+
+- `DesktopGate` (`components/shell/desktop-gate.tsx`) mounts `AppShell` only at `(min-width: 1024px)`, via `useSyncExternalStore` with a "wide" server snapshot, so desktop reloads still paint the shell from server HTML. Below 1024px its window shortcuts no longer edit a book nobody can see.
+- `AppShell`'s hydrate effect and the Fabric import check `isWideViewport()` (`lib/viewport.ts`) first, because they run in the first hydration commit before the gate unmounts: a narrow load opens no IndexedDB and fetches no Fabric chunk. Widening mounts the editor; narrowing unmounts it again.
+- Verified: `npm run verify`, `verify:polish`, `e2e`, `verify:escape-selection` pass; a 900px Playwright load shows the notice, no `sequence` database and no Fabric chunk, then mounts at 1440px and unmounts back at 900px with no errors.

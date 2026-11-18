@@ -11,6 +11,7 @@ import { LayersPanel } from "@/components/shell/layers-panel"
 import { TopNav } from "@/components/shell/top-nav"
 import { ToastProvider, ToastViewport } from "@/components/ui/toast"
 import { registerSaveFlush } from "@/lib/storage/project"
+import { isWideViewport } from "@/lib/viewport"
 import { useEditorStore } from "@/state/editor-store"
 
 const LEFT_PANEL_WIDTH = "15rem" // 240px — matches LayersPanel's w-60
@@ -37,6 +38,9 @@ export function AppShell() {
   // real state arrives after mount. Doing this any earlier is a hydration
   // mismatch rather than a visible error.
   useEffect(() => {
+    // Below desktop width `DesktopGate` unmounts this right after the first
+    // hydration commit; don't open the project for that one frame.
+    if (!isWideViewport()) return
     void hydrate()
     return registerSaveFlush()
   }, [hydrate])
