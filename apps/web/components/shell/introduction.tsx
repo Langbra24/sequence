@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, type ReactNode } from "react"
 import { BookOpenIcon, XIcon } from "@phosphor-icons/react"
 
 import { Button } from "@/components/ui/button"
@@ -23,8 +23,8 @@ import { useEditorStore } from "@/state/editor-store"
  * emptiness could never express — hence the separate `introductionDismissed`
  * flag rather than deriving visibility from `project` alone.
  *
- * Content is split into four `.stagger-section` pieces (what it is, who built
- * it, why it exists, then the button) that cascade in on mount — see the
+ * Content is split into four `.stagger-section` pieces (what it is, why it
+ * exists, who built it, then the button) that cascade in on mount — see the
  * entrance-animation comment in globals.css. Splitting the copy this way
  * isn't just for the animation: it's also why the copy below stays terse —
  * each piece has to read as a single complete beat on its own.
@@ -57,7 +57,10 @@ export function Introduction() {
       }}
       className="intro-overlay absolute inset-0 z-40 flex items-center justify-center bg-background/80 backdrop-blur-sm"
     >
-      <div className="intro-dialog relative flex max-w-md flex-col gap-3 rounded-2xl border bg-card p-6 shadow-lg">
+      {/* Sizes from the Paper frame: 535px wide, 24px between sections and
+          8px within one. The copy is long enough to outgrow a short window,
+          so the dialog scrolls rather than clipping. */}
+      <div className="intro-dialog relative mx-4 flex max-h-[calc(100%-2rem)] w-full max-w-[535px] flex-col gap-6 overflow-y-auto rounded-xl border bg-card p-6 shadow-lg">
         <Button
           variant="ghost"
           size="icon-xs"
@@ -68,33 +71,42 @@ export function Introduction() {
           <XIcon />
         </Button>
 
-        <div className="stagger-section flex flex-col gap-1.5" style={stagger(0)}>
-          <h1 className="font-heading text-lg font-medium">Sequence</h1>
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            A browser-based tool for sequencing, designing, and print-imposing a photobook or
-            zine — no InDesign required.
-          </p>
+        <div className="stagger-section flex flex-col gap-2" style={stagger(0)}>
+          <h1 className="text-2xl font-semibold">Sequence</h1>
+          <IntroParagraph>
+            Sequence is an open experiment in growing software with the people who use it. A
+            browser-based tool for sequencing, designing, and print-imposing a photobook or zine.
+          </IntroParagraph>
+          <IntroParagraph>
+            It is early, and it will keep changing shape based on what the community would like to
+            see. Over time I will add features I am interested in as well.
+          </IntroParagraph>
         </div>
 
-        {/* Geist is loaded without an italic, so the name is emphasised by
-            colour and weight, not a slant the browser would have to fake. */}
-        <p className="stagger-section text-sm leading-relaxed text-muted-foreground" style={stagger(1)}>
-          Built in the open by <em className="font-medium text-foreground not-italic">Brandon Lang</em>.
-        </p>
+        <div className="stagger-section flex flex-col gap-2" style={stagger(1)}>
+          <h2 className="text-sm font-medium text-foreground">Why?</h2>
+          <IntroParagraph>
+            I am a photographer in my spare time. I took a Magnum workshop in 2026 hosted by{" "}
+            <IntroLink href="https://www.mattblack.com/">Matt Black</IntroLink> and a photobook
+            creation session with X. The whole experience left me inspired, but when it came to
+            bringing my photos into a book there were some minimal tools for zines, but they were
+            also limiting in creativity, InDesign is overkill, and I am done paying for one-off
+            subs. This is why I made this piece of software! Minimal, with enough features to not
+            limit creativity.
+          </IntroParagraph>
+        </div>
 
-        {/* The storage line shares the "why" beat's delay rather than adding
-            a fifth, so the focused button doesn't reveal any later. */}
-        <div className="stagger-section flex flex-col gap-3" style={stagger(2)}>
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            It&apos;s early, and it&apos;ll keep changing shape based on what people actually
-            building books with it need. Import some photographs to get started, and use the
-            feedback control in this corner any time something feels wrong, missing, or confusing —
-            that&apos;s how this gets built.
-          </p>
-          <p className="text-sm leading-relaxed text-muted-foreground">
+        {/* The storage line isn't in the Paper frame but stays: it's the one
+            thing a first-time bookmaker can lose work over. It shares this
+            beat's delay rather than adding another, so the focused button
+            doesn't reveal any later. */}
+        <div className="stagger-section flex flex-col gap-2" style={stagger(2)}>
+          <h2 className="text-sm font-medium text-foreground">Who created this?</h2>
+          <IntroParagraph>Brandon Lang, a software designer based out of KC.</IntroParagraph>
+          <IntroParagraph>
             Your work is saved only in this browser on this computer. Clearing your browser’s site
             data deletes it.
-          </p>
+          </IntroParagraph>
         </div>
 
         <Button
@@ -107,6 +119,25 @@ export function Introduction() {
         </Button>
       </div>
     </div>
+  )
+}
+
+function IntroParagraph({ children }: { children: ReactNode }) {
+  return <p className="text-sm leading-relaxed text-muted-foreground">{children}</p>
+}
+
+/** An outside link inside the intro copy: underlined in the surrounding
+ *  text's colour, white on hover, always a new tab. */
+function IntroLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="rounded-xs underline underline-offset-2 transition-colors hover:text-white focus-ring"
+    >
+      {children}
+    </a>
   )
 }
 
