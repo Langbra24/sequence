@@ -123,8 +123,8 @@ export function FeedbackControl() {
         <Popover.Positioner side="top" align="start" sideOffset={8}>
           <Popover.Popup className="z-50 w-80 origin-(--transform-origin) rounded-xl border bg-popover p-3 text-popover-foreground shadow-lg outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95">
             <div className="stagger-section" style={stagger(0)}>
-              <Popover.Title className="text-sm font-medium">Send feedback</Popover.Title>
-              <Popover.Description className="pt-0.5 pb-2 text-xs text-muted-foreground">
+              <Popover.Title className="text-base font-medium">Send feedback</Popover.Title>
+              <Popover.Description className="pt-0.5 pb-4 text-sm text-muted-foreground">
                 Posted publicly as a GitHub issue, with your email if you add one. The more detail, the better:
                 what you were doing, what you expected, and what happened.
               </Popover.Description>
