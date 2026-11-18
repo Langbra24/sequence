@@ -1,8 +1,16 @@
 "use client"
 
-import { useEffect, useRef } from "react"
-import { BookOpenIcon, XIcon } from "@phosphor-icons/react"
+import { useEffect, useRef, type ReactNode } from "react"
+import { Popover } from "@base-ui/react/popover"
+import {
+  BookOpenIcon,
+  InstagramLogoIcon,
+  LinkedinLogoIcon,
+  XIcon,
+  XLogoIcon,
+} from "@phosphor-icons/react"
 
+import { LogoMark, Wordmark } from "@/components/shell/logo-mark"
 import { Button } from "@/components/ui/button"
 import { stagger } from "@/lib/utils"
 import { useEditorStore } from "@/state/editor-store"
@@ -10,8 +18,8 @@ import { useEditorStore } from "@/state/editor-store"
 /**
  * The empty-canvas introduction (R25).
  *
- * Rendered as a direct sibling of the canvas region (see app-shell.tsx) so its
- * `absolute inset-0` sizes to the whole shell rather than to whatever small
+ * Rendered as a direct child of the shell's outer column (see app-shell.tsx)
+ * so its `absolute inset-0` covers the whole shell, top nav included, rather than to whatever small
  * wrapper the bottom-left controls happen to sit in — {@link IntroductionReopenButton}
  * is a separate export for exactly that reason, so it can be placed inside
  * that row alongside the feedback control (R32) without dragging the overlay
@@ -23,8 +31,8 @@ import { useEditorStore } from "@/state/editor-store"
  * emptiness could never express — hence the separate `introductionDismissed`
  * flag rather than deriving visibility from `project` alone.
  *
- * Content is split into four `.stagger-section` pieces (what it is, who built
- * it, why it exists, then the button) that cascade in on mount — see the
+ * Content is split into four `.stagger-section` pieces (what it is, why it
+ * exists, who built it, then the button) that cascade in on mount — see the
  * entrance-animation comment in globals.css. Splitting the copy this way
  * isn't just for the animation: it's also why the copy below stays terse —
  * each piece has to read as a single complete beat on its own.
@@ -35,8 +43,7 @@ export function Introduction() {
   const getStartedRef = useRef<HTMLButtonElement>(null)
 
   // Keyboard focus starts on the overlay's main action (#45). What the
-  // overlay covers is made inert in app-shell.tsx; the top nav stays live,
-  // for the keyboard as for the mouse.
+  // overlay covers, top nav included, is made inert in app-shell.tsx.
   useEffect(() => {
     if (shouldShowOverlay) getStartedRef.current?.focus()
   }, [shouldShowOverlay])
@@ -44,11 +51,11 @@ export function Introduction() {
   if (!shouldShowOverlay) return null
 
   return (
-    // Escape does what the X does (#56). Handled on the overlay, not the
-    // window: it isn't modal, so Escape pressed in the top nav (still live)
-    // belongs to whatever has focus there.
+    // Escape does what the X does (#56). Everything else is inert while this
+    // is up, so it's modal: focus can only be in here.
     <div
       role="dialog"
+      aria-modal="true"
       aria-label="About Sequence"
       onKeyDown={(event) => {
         if (event.key !== "Escape") return
@@ -57,7 +64,10 @@ export function Introduction() {
       }}
       className="intro-overlay absolute inset-0 z-40 flex items-center justify-center bg-background/80 backdrop-blur-sm"
     >
-      <div className="intro-dialog relative flex max-w-md flex-col gap-3 rounded-2xl border bg-card p-6 shadow-lg">
+      {/* Sizes from the Paper frame: 535px wide, 24px between sections and
+          8px within one. The copy is long enough to outgrow a short window,
+          so the dialog scrolls rather than clipping. */}
+      <div className="intro-dialog relative mx-4 flex max-h-[calc(100%-2rem)] w-full max-w-[535px] flex-col gap-6 overflow-y-auto rounded-xl border bg-card p-6 shadow-lg">
         <Button
           variant="ghost"
           size="icon-xs"
@@ -68,33 +78,51 @@ export function Introduction() {
           <XIcon />
         </Button>
 
-        <div className="stagger-section flex flex-col gap-1.5" style={stagger(0)}>
-          <h1 className="font-heading text-lg font-medium">Sequence</h1>
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            A browser-based tool for sequencing, designing, and print-imposing a photobook or
-            zine — no InDesign required.
-          </p>
+        <div className="stagger-section flex flex-col gap-2" style={stagger(0)}>
+          {/* The nav's logo at the nav's own 24px, so the title is the
+              brand rather than a second spelling of it. The wordmark is
+              live text, so the heading still reads "sequence". */}
+          <h1 className="flex items-baseline gap-[7px] pb-1 text-foreground">
+            <Wordmark />
+            <LogoMark className="size-[13px] shrink-0" />
+          </h1>
+          <IntroParagraph>
+            Sequence is an open experiment in growing software with the people who use it. A
+            browser-based tool for sequencing, designing, and print-imposing a photobook or zine.
+          </IntroParagraph>
+          <IntroParagraph>
+            It is early, and it will keep changing shape based on what the community would like to
+            see. Over time I will add features I am interested in as well.
+          </IntroParagraph>
         </div>
 
-        {/* Geist is loaded without an italic, so the name is emphasised by
-            colour and weight, not a slant the browser would have to fake. */}
-        <p className="stagger-section text-sm leading-relaxed text-muted-foreground" style={stagger(1)}>
-          Built in the open by <em className="font-medium text-foreground not-italic">Brandon Lang</em>.
-        </p>
+        <div className="stagger-section flex flex-col gap-2" style={stagger(1)}>
+          <h2 className="text-sm font-medium text-foreground">Why?</h2>
+          <IntroParagraph>
+            I am a photographer in my spare time. I took a Magnum workshop in 2026 hosted by{" "}
+            <IntroLink href="https://www.mattblack.com/">Matt Black</IntroLink> and a photobook
+            creation session with{" "}
+            <IntroLink href="https://yocuomo.com/">Yolanda Cuomo</IntroLink>. The whole experience left me inspired, but when it came to
+            bringing my photos into a book there were some minimal tools for zines, but they were
+            also limiting in creativity, InDesign is overkill, and I am done paying for one-off
+            subs. This is why I made this piece of software! Minimal, with enough features to not
+            limit creativity.
+          </IntroParagraph>
+        </div>
 
-        {/* The storage line shares the "why" beat's delay rather than adding
-            a fifth, so the focused button doesn't reveal any later. */}
-        <div className="stagger-section flex flex-col gap-3" style={stagger(2)}>
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            It&apos;s early, and it&apos;ll keep changing shape based on what people actually
-            building books with it need. Import some photographs to get started, and use the
-            feedback control in this corner any time something feels wrong, missing, or confusing —
-            that&apos;s how this gets built.
-          </p>
-          <p className="text-sm leading-relaxed text-muted-foreground">
+        {/* The storage line isn't in the Paper frame but stays: it's the one
+            thing a first-time bookmaker can lose work over. It shares this
+            beat's delay rather than adding another, so the focused button
+            doesn't reveal any later. */}
+        <div className="stagger-section flex flex-col gap-2" style={stagger(2)}>
+          <h2 className="text-sm font-medium text-foreground">Who created this?</h2>
+          <IntroParagraph>
+            <SocialsPopover>Brandon Lang</SocialsPopover>, a software designer based out of KC.
+          </IntroParagraph>
+          <IntroParagraph>
             Your work is saved only in this browser on this computer. Clearing your browser’s site
             data deletes it.
-          </p>
+          </IntroParagraph>
         </div>
 
         <Button
@@ -107,6 +135,72 @@ export function Introduction() {
         </Button>
       </div>
     </div>
+  )
+}
+
+function IntroParagraph({ children }: { children: ReactNode }) {
+  return <p className="text-sm leading-relaxed text-muted-foreground">{children}</p>
+}
+
+/** An outside link inside the intro copy: underlined in the surrounding
+ *  text's colour, white on hover, always a new tab. */
+function IntroLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="rounded-xs underline underline-offset-2 transition-colors hover:text-white focus-ring"
+    >
+      {children}
+    </a>
+  )
+}
+
+const SOCIALS = [
+  {
+    label: "LinkedIn",
+    href: "https://www.linkedin.com/in/brandon-lang-221370a5/",
+    Icon: LinkedinLogoIcon,
+  },
+  { label: "X", href: "https://x.com/brandooolang", Icon: XLogoIcon },
+  { label: "Instagram", href: "https://www.instagram.com/brandooo.lang/", Icon: InstagramLogoIcon },
+] as const
+
+/** The author's name, styled like {@link IntroLink}; hovering (or clicking,
+ *  for keyboard and touch) opens a small card of social links. A popover
+ *  rather than a preview card because the name itself goes nowhere — it's a
+ *  button, so Enter/Space open it and focus moves into the icons. */
+function SocialsPopover({ children }: { children: ReactNode }) {
+  return (
+    <Popover.Root>
+      <Popover.Trigger
+        openOnHover
+        delay={100}
+        closeDelay={150}
+        className="cursor-pointer rounded-xs underline underline-offset-2 transition-colors hover:text-white focus-ring data-popup-open:text-white"
+      >
+        {children}
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Positioner side="top" sideOffset={6} className="isolate z-50">
+          <Popover.Popup className="flex origin-(--transform-origin) items-center gap-1 rounded-lg border bg-popover p-1 text-muted-foreground shadow-md transition-[opacity,scale] duration-150 ease-out data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
+            {SOCIALS.map(({ label, href, Icon }) => (
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Brandon Lang on ${label}`}
+                className="flex size-8 items-center justify-center rounded-md transition-colors hover:text-white focus-ring"
+              >
+                <Icon className="size-4" />
+              </a>
+            ))}
+          </Popover.Popup>
+        </Popover.Positioner>
+      </Popover.Portal>
+    </Popover.Root>
   )
 }
 
