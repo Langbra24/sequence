@@ -173,6 +173,12 @@ export async function placePhotoOnFirstPage(page) {
 /** Places a text box on page 1 with the `T` tool and leaves it selected. */
 export async function placeTextOnFirstPage(page, text = "Ink") {
   const spot = await firstPageCenter(page)
+  // T in a focused text field (e.g. the always-visible Book name input) types
+  // a letter, as it should; take focus off it so T arms the text tool.
+  await page.evaluate(() => {
+    const el = document.activeElement
+    if (el instanceof HTMLElement && el.matches("input, textarea, [contenteditable]")) el.blur()
+  })
   await page.keyboard.press("T")
   await page.mouse.click(spot.x, spot.y)
   await page.waitForTimeout(300)
