@@ -95,7 +95,8 @@ export function Introduction() {
           <IntroParagraph>
             I am a photographer in my spare time. I took a Magnum workshop in 2026 hosted by{" "}
             <IntroLink href="https://www.mattblack.com/">Matt Black</IntroLink> and a photobook
-            creation session with X. The whole experience left me inspired, but when it came to
+            creation session with{" "}
+            <IntroLink href="https://yocuomo.com/">Yolanda Cuomo</IntroLink>. The whole experience left me inspired, but when it came to
             bringing my photos into a book there were some minimal tools for zines, but they were
             also limiting in creativity, InDesign is overkill, and I am done paying for one-off
             subs. This is why I made this piece of software! Minimal, with enough features to not
