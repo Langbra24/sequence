@@ -1,7 +1,14 @@
 "use client"
 
 import { useEffect, useRef, type ReactNode } from "react"
-import { BookOpenIcon, XIcon } from "@phosphor-icons/react"
+import { Popover } from "@base-ui/react/popover"
+import {
+  BookOpenIcon,
+  InstagramLogoIcon,
+  LinkedinLogoIcon,
+  XIcon,
+  XLogoIcon,
+} from "@phosphor-icons/react"
 
 import { Button } from "@/components/ui/button"
 import { stagger } from "@/lib/utils"
@@ -102,7 +109,9 @@ export function Introduction() {
             doesn't reveal any later. */}
         <div className="stagger-section flex flex-col gap-2" style={stagger(2)}>
           <h2 className="text-sm font-medium text-foreground">Who created this?</h2>
-          <IntroParagraph>Brandon Lang, a software designer based out of KC.</IntroParagraph>
+          <IntroParagraph>
+            <SocialsPopover>Brandon Lang</SocialsPopover>, a software designer based out of KC.
+          </IntroParagraph>
           <IntroParagraph>
             Your work is saved only in this browser on this computer. Clearing your browser’s site
             data deletes it.
@@ -138,6 +147,50 @@ function IntroLink({ href, children }: { href: string; children: ReactNode }) {
     >
       {children}
     </a>
+  )
+}
+
+// TODO(Brandon): real profile URLs before merging.
+const SOCIALS = [
+  { label: "LinkedIn", href: "https://www.linkedin.com/", Icon: LinkedinLogoIcon },
+  { label: "X", href: "https://x.com/", Icon: XLogoIcon },
+  { label: "Instagram", href: "https://www.instagram.com/", Icon: InstagramLogoIcon },
+] as const
+
+/** The author's name, styled like {@link IntroLink}; hovering (or clicking,
+ *  for keyboard and touch) opens a small card of social links. A popover
+ *  rather than a preview card because the name itself goes nowhere — it's a
+ *  button, so Enter/Space open it and focus moves into the icons. */
+function SocialsPopover({ children }: { children: ReactNode }) {
+  return (
+    <Popover.Root>
+      <Popover.Trigger
+        openOnHover
+        delay={100}
+        closeDelay={150}
+        className="cursor-pointer rounded-xs underline underline-offset-2 transition-colors hover:text-white focus-ring data-popup-open:text-white"
+      >
+        {children}
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Positioner side="top" sideOffset={6} className="isolate z-50">
+          <Popover.Popup className="flex origin-(--transform-origin) items-center gap-1 rounded-lg border bg-popover p-1 text-muted-foreground shadow-md transition-[opacity,scale] duration-150 ease-out data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
+            {SOCIALS.map(({ label, href, Icon }) => (
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Brandon Lang on ${label}`}
+                className="flex size-8 items-center justify-center rounded-md transition-colors hover:text-white focus-ring"
+              >
+                <Icon className="size-4" />
+              </a>
+            ))}
+          </Popover.Popup>
+        </Popover.Positioner>
+      </Popover.Portal>
+    </Popover.Root>
   )
 }
 
