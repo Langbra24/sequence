@@ -118,6 +118,9 @@ npm run verify:separators # build; in all four inspector states every divider
                      #   spans the right panel's full inner width
 npm run verify:color-undo # build; a typed hex and a hue drag are one undo step
                      #   each; undo/redo move the color everywhere
+npm run verify:text-color-live # build with test hooks; dragging the text Color
+                     #   picker recolors the box on every step, even mid-typing,
+                     #   and never wipes the uncommitted text
 npm run verify:dialog-focus # build; fast Tab/Shift+Tab never leave the Export
                      #   dialog or reach what the intro/book-setup overlays cover
 npm run verify:top-nav # build; the top nav holds exactly one button, Export;
