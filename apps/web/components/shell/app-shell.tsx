@@ -33,8 +33,8 @@ export function AppShell() {
   const leftPanelOpen = useEditorStore((state) => state.leftPanelOpen)
   const rightPanelOpen = useEditorStore((state) => state.rightPanelOpen)
   const hydrate = useEditorStore((state) => state.hydrate)
-  // Under the introduction overlay, the panels, canvas and bottom-left
-  // controls are covered: inert, so Tab can't reach what a click can't (#45).
+  // Under the introduction overlay, the top nav, panels, canvas and
+  // bottom-left controls are covered: inert, so Tab can't reach what a click can't (#45).
   const covered = useIntroductionShowing() || undefined
 
   // IndexedDB is client-only, so the store starts as a valid empty project and
@@ -50,8 +50,14 @@ export function AppShell() {
 
   return (
     <ToastProvider>
-      <div className="flex h-svh flex-col overflow-hidden">
-        <TopNav />
+      <div className="relative flex h-svh flex-col overflow-hidden">
+        <div className="contents" inert={covered}>
+          <TopNav />
+        </div>
+
+        {/* Here rather than inside the grid below so its scrim covers the
+            top nav too, not just the panels and canvas. */}
+        <Introduction />
 
         <div
           className="relative grid min-h-0 flex-1 [--left-panel-width:13rem] [--right-panel-width:15rem] lg:[--left-panel-width:15rem] lg:[--right-panel-width:18rem] transition-[grid-template-columns] duration-200 ease-out motion-reduce:transition-none"
@@ -75,7 +81,6 @@ export function AppShell() {
             <InspectorPanel />
           </div>
 
-          <Introduction />
           <ErrorBanner />
 
           {/* Bottom-left: feedback and the introduction's reopen control sit

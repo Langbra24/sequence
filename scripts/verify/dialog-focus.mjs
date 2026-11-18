@@ -9,9 +9,9 @@
 // are exactly what used to walk out of the Export dialog.
 //
 // The contract:
-//   1. Introduction overlay (covers the panels and canvas, not the top nav):
-//      focus starts on "Get started" and only ever lands in the overlay, the
-//      top nav or the browser's own UI, never on a covered control.
+//   1. Introduction overlay (covers the whole shell, top nav included):
+//      focus starts on "Get started" and only ever lands in the overlay or
+//      the browser's own UI, never on a covered control.
 //   2. Book setup (covers the canvas region): focus starts on the selected
 //      page size and never lands on the canvas or its toolbars.
 //   3. Export dialog (modal): focus starts on the selected format, never on
@@ -67,18 +67,17 @@ try {
   const introStart = await focusIn(page, (element) => element?.textContent?.trim() === "Get started")
   check(introStart.ok, `1. the introduction starts focus on "Get started" (${introStart.where})`)
   // Past the last tabbable on the page, Tab goes to the browser's own UI
-  // (activeElement = body) before wrapping to the top nav. That's right for
-  // an overlay that isn't modal; what matters is never landing under it.
+  // (activeElement = body) before wrapping back. The top nav is covered and
+  // inert like everything else, so focus never lands there either.
   const introEscapes = await tabAround(
     page,
     (element) =>
       element === document.body ||
-      !!element?.closest('[role="dialog"][aria-label="About Sequence"]') ||
-      !!element?.closest("header, [role=banner]"),
+      !!element?.closest('[role="dialog"][aria-label="About Sequence"]'),
   )
   check(
     introEscapes.length === 0,
-    `1. ${PRESSES * 2} fast Tab/Shift+Tab presses stay in the introduction or the top nav` +
+    `1. ${PRESSES * 2} fast Tab/Shift+Tab presses stay in the introduction` +
       (introEscapes.length ? `; escaped: ${introEscapes.slice(0, 3).join("; ")}` : ""),
   )
   await intro.getByRole("button", { name: "Get started" }).click()

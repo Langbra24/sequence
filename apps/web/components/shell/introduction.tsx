@@ -18,8 +18,8 @@ import { useEditorStore } from "@/state/editor-store"
 /**
  * The empty-canvas introduction (R25).
  *
- * Rendered as a direct sibling of the canvas region (see app-shell.tsx) so its
- * `absolute inset-0` sizes to the whole shell rather than to whatever small
+ * Rendered as a direct child of the shell's outer column (see app-shell.tsx)
+ * so its `absolute inset-0` covers the whole shell, top nav included, rather than to whatever small
  * wrapper the bottom-left controls happen to sit in — {@link IntroductionReopenButton}
  * is a separate export for exactly that reason, so it can be placed inside
  * that row alongside the feedback control (R32) without dragging the overlay
@@ -43,8 +43,7 @@ export function Introduction() {
   const getStartedRef = useRef<HTMLButtonElement>(null)
 
   // Keyboard focus starts on the overlay's main action (#45). What the
-  // overlay covers is made inert in app-shell.tsx; the top nav stays live,
-  // for the keyboard as for the mouse.
+  // overlay covers, top nav included, is made inert in app-shell.tsx.
   useEffect(() => {
     if (shouldShowOverlay) getStartedRef.current?.focus()
   }, [shouldShowOverlay])
@@ -52,11 +51,11 @@ export function Introduction() {
   if (!shouldShowOverlay) return null
 
   return (
-    // Escape does what the X does (#56). Handled on the overlay, not the
-    // window: it isn't modal, so Escape pressed in the top nav (still live)
-    // belongs to whatever has focus there.
+    // Escape does what the X does (#56). Everything else is inert while this
+    // is up, so it's modal: focus can only be in here.
     <div
       role="dialog"
+      aria-modal="true"
       aria-label="About Sequence"
       onKeyDown={(event) => {
         if (event.key !== "Escape") return
