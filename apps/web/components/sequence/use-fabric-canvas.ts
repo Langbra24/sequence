@@ -2267,25 +2267,33 @@ export function useFabricCanvas(options: Options) {
           if (element.kind === "text") {
             const textObject = existing as unknown as {
               text?: string
+              isEditing?: boolean
               fontFamily?: string
               textAlign?: string
               fontSize?: number
               fill?: string
             }
+            // While the box is being typed into, its text is ahead of the
+            // store: content is committed only when editing ends
+            // (`text:editing:exited`). Pushing the stored content back in
+            // here would wipe what the user just typed the moment any other
+            // property changes — picking a color with the box still in
+            // editing blanked it, so the color seemed not to apply.
+            const nextText = textObject.isEditing ? textObject.text : element.content
             const nextFontFamily = resolveTextFontFamily(element.fontFamily)
             const nextFontSize =
               resolveTextSize(element.role, element.fontSize, typeBaseSize, typeRatio) *
               sceneUnitsPerPt(frame.pageSize.width)
             const nextFill = element.color ?? DEFAULT_TEXT_COLOR
             textChanged =
-              textObject.text !== element.content ||
+              textObject.text !== nextText ||
               textObject.fontFamily !== nextFontFamily ||
               textObject.textAlign !== element.align ||
               Math.abs((textObject.fontSize ?? 0) - nextFontSize) >= 0.5 ||
               textObject.fill !== nextFill
             if (textChanged) {
               existing.set({
-                text: element.content,
+                text: nextText,
                 fontFamily: nextFontFamily,
                 textAlign: element.align,
                 fontSize: nextFontSize,
