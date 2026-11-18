@@ -150,11 +150,14 @@ function IntroLink({ href, children }: { href: string; children: ReactNode }) {
   )
 }
 
-// TODO(Brandon): real profile URLs before merging.
 const SOCIALS = [
-  { label: "LinkedIn", href: "https://www.linkedin.com/", Icon: LinkedinLogoIcon },
-  { label: "X", href: "https://x.com/", Icon: XLogoIcon },
-  { label: "Instagram", href: "https://www.instagram.com/", Icon: InstagramLogoIcon },
+  {
+    label: "LinkedIn",
+    href: "https://www.linkedin.com/in/brandon-lang-221370a5/",
+    Icon: LinkedinLogoIcon,
+  },
+  { label: "X", href: "https://x.com/brandooolang", Icon: XLogoIcon },
+  { label: "Instagram", href: "https://www.instagram.com/brandooo.lang/", Icon: InstagramLogoIcon },
 ] as const
 
 /** The author's name, styled like {@link IntroLink}; hovering (or clicking,
