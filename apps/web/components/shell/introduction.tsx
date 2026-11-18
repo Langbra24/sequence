@@ -10,6 +10,7 @@ import {
   XLogoIcon,
 } from "@phosphor-icons/react"
 
+import { LogoMark, Wordmark } from "@/components/shell/logo-mark"
 import { Button } from "@/components/ui/button"
 import { stagger } from "@/lib/utils"
 import { useEditorStore } from "@/state/editor-store"
@@ -79,7 +80,13 @@ export function Introduction() {
         </Button>
 
         <div className="stagger-section flex flex-col gap-2" style={stagger(0)}>
-          <h1 className="text-2xl font-semibold">Sequence</h1>
+          {/* The nav's logo at the nav's own 24px, so the title is the
+              brand rather than a second spelling of it. The wordmark is
+              live text, so the heading still reads "sequence". */}
+          <h1 className="flex items-baseline gap-[7px] pb-1 text-foreground">
+            <Wordmark />
+            <LogoMark className="size-[13px] shrink-0" />
+          </h1>
           <IntroParagraph>
             Sequence is an open experiment in growing software with the people who use it. A
             browser-based tool for sequencing, designing, and print-imposing a photobook or zine.
