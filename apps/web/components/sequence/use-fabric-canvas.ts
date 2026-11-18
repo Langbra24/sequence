@@ -29,6 +29,7 @@ import { editAtEnd, selectableTextboxClass } from "@/components/sequence/selecta
 import { hasOpenPopup, isKeyboardEvent, isTypingTarget } from "@/components/sequence/use-canvas-shortcuts"
 import { DEFAULT_TEXT_FONT, resolveTextFontFamily } from "@/lib/fonts"
 import { thumbnailUrl } from "@/lib/storage/assets"
+import { isWideViewport } from "@/lib/viewport"
 
 /** The transient pasteboard textbox's fill while it's sitting on the dark
  *  canvas, not yet committed to any frame. */
@@ -722,7 +723,10 @@ export function useFabricCanvas(options: Options) {
     window.addEventListener("keydown", onSpaceKeyDown, true)
     window.addEventListener("keyup", onSpaceKeyUp, true)
 
+    // Below desktop width `DesktopGate` is about to unmount the editor:
+    // don't download Fabric for a canvas that never shows.
     void (async () => {
+      if (!isWideViewport()) return
       const fabric = await import("fabric")
       if (disposed || !canvasElementRef.current) return
 
