@@ -112,7 +112,7 @@ try {
     `3. book view: only the selected row is aria-current (${JSON.stringify(currentRows)})`,
   )
   // The book overview's grid of page previews, in the canvas region.
-  const grid = page.locator('[class*="minmax(220px"]')
+  const grid = page.locator('[class*="minmax(min(220px"]')
   const previews = await grid.getByRole("button", { name: /^Page \d+$/ }).all()
   check(previews.length === 8, `3. book view: 8 page previews named "Page N" (found ${previews.length})`)
   const currentPreview = await grid.locator('[aria-current="true"]').getAttribute("aria-label")

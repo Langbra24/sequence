@@ -75,7 +75,7 @@ function BookOverview() {
 
   return (
     <div className="p-8 pt-16">
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(220px,100%),1fr))] gap-6">
         {frames.map((frame) => (
           <FramePreview key={frame.id} frame={frame} project={project} />
         ))}

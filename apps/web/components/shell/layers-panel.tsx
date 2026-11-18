@@ -31,7 +31,7 @@ export function LayersPanel() {
   const setView = useEditorStore((state) => state.setPanelView)
 
   return (
-    <aside className="flex h-full w-60 flex-col border-r bg-background">
+    <aside className="flex h-full w-52 flex-col lg:w-60 border-r bg-background">
       {/* 8px around the field, the tabs' own 6px below that: 14px from the
           field to the tab track, and both share the same 8px side inset.
           The 32px slot is reserved before hydration so nothing shifts. */}

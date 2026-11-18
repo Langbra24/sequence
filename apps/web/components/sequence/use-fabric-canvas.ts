@@ -124,7 +124,7 @@ function sceneUnitsPerPt(pageWidthMm: number): number {
   return (FRAME_DISPLAY_WIDTH / pageWidthMm) * MM_PER_PT
 }
 
-export const MIN_ZOOM = 0.05
+export const MIN_ZOOM = 0.02
 export const MAX_ZOOM = 8
 
 /** Padding around the arrangement when fitting it to the viewport. */
@@ -135,7 +135,7 @@ const FIT_PADDING = 80
  * screen pixels, deliberately not scaled by zoom (direct follow-up,
  * user-directed: "I don't want the density to necessarily change"). It
  * used to be — see `syncDotGrid` below — which meant the tile shrank to a
- * sub-pixel size at the low end of the zoom range (`MIN_ZOOM` is 0.05, so
+ * sub-pixel size at the low end of the zoom range (`MIN_ZOOM` was 0.05, so
  * 24px became ~1px), and a 1px radial-gradient dot rendered at a ~1px tile
  * just antialiases into a flat tint instead of visible dots — the reported
  * "canvas turns charcoal blue-gray when zoomed way out" bug. 32 (up from
