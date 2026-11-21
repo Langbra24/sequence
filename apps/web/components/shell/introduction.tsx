@@ -110,18 +110,10 @@ export function Introduction() {
           </IntroParagraph>
         </div>
 
-        {/* The storage line isn't in the Paper frame but stays: it's the one
-            thing a first-time bookmaker can lose work over. It shares this
-            beat's delay rather than adding another, so the focused button
-            doesn't reveal any later. */}
         <div className="stagger-section flex flex-col gap-2" style={stagger(2)}>
           <h2 className="text-sm font-medium text-foreground">Who created this?</h2>
           <IntroParagraph>
             <SocialsPopover>Brandon Lang</SocialsPopover>, a software designer based out of KC.
-          </IntroParagraph>
-          <IntroParagraph>
-            Your work is saved only in this browser on this computer. Clearing your browser’s site
-            data deletes it.
           </IntroParagraph>
         </div>
 
