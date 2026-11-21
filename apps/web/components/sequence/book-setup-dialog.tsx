@@ -73,7 +73,7 @@ export function BookSetupDialog() {
         aria-labelledby={titleId}
         className="w-full max-w-sm rounded-xl border bg-card p-6 shadow-lg"
       >
-        <h2 id={titleId} className="font-heading text-base font-medium">
+        <h2 id={titleId} className="text-base font-medium">
           Set up your book
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -173,6 +173,15 @@ export function BookSetupDialog() {
             )}
           </div>
         </div>
+
+        {/* The storage warning lives here rather than in the introduction:
+            this is the moment work starts existing, so it's the moment the
+            "only in this browser" caveat matters. 16px from the page-count
+            row above and from the button below. */}
+        <p className="mt-4 text-sm text-pretty text-muted-foreground">
+          Your work is saved only in this browser on this computer. Clearing
+          your browser’s site data deletes it.
+        </p>
 
         <Button className="mt-4 w-full" disabled={!canSubmit} onClick={handleSubmit}>
           Create book
