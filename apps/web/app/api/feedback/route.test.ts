@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from "vitest"
 
 import { FEEDBACK_MAX_LENGTH, GITHUB_REPO } from "@/lib/feedback-url"
+import { resetFeedbackRateLimit } from "@/lib/feedback-rate-limit"
 
 import { POST } from "./route"
 
@@ -28,6 +29,7 @@ beforeEach(() => {
   process.env.GITHUB_FEEDBACK_TOKEN = "test-token"
   delete process.env.GITHUB_API_URL
   consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined)
+  resetFeedbackRateLimit()
 })
 
 afterEach(() => {
@@ -317,6 +319,47 @@ describe("POST /api/feedback", () => {
     await POST(postRequest({ feedback: "hi" }))
 
     expect(fetchMock.mock.calls[0][0]).toBe(`http://127.0.0.1:9999/repos/${GITHUB_REPO}/issues`)
+  })
+
+  describe("limits", () => {
+    const from = (ip: string) => ({ ...SAME_ORIGIN, "X-Real-IP": ip })
+
+    it("413s a body over 32 KB without parsing it or calling GitHub", async () => {
+      const fetchMock = vi.fn()
+      vi.stubGlobal("fetch", fetchMock)
+
+      const response = await POST(postRequest({ feedback: "x".repeat(40_000) }))
+
+      expect(response.status).toBe(413)
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+
+    it("lets one visitor file 3 notes, then 429s the 4th with Retry-After and a wait message", async () => {
+      const fetchMock = vi.fn().mockImplementation(async () => created())
+      vi.stubGlobal("fetch", fetchMock)
+
+      for (let i = 0; i < 3; i++) {
+        expect((await POST(postRequest({ feedback: `note ${i}` }, from("1.1.1.1")))).status).toBe(201)
+      }
+      const limited = await POST(postRequest({ feedback: "note 4" }, from("1.1.1.1")))
+      const json = (await limited.json()) as { error: string }
+
+      expect(limited.status).toBe(429)
+      expect(Number(limited.headers.get("Retry-After"))).toBeGreaterThan(0)
+      expect(json.error).toMatch(/Your note is still here; please try again in \d+ minutes\./)
+      expect(fetchMock).toHaveBeenCalledTimes(3)
+
+      // Someone else isn't held up by that visitor.
+      expect((await POST(postRequest({ feedback: "other" }, from("2.2.2.2")))).status).toBe(201)
+    })
+
+    it("doesn't count a note GitHub failed to file", async () => {
+      vi.stubGlobal("fetch", vi.fn().mockImplementation(async () => githubError(500, "boom")))
+      for (let i = 0; i < 5; i++) await POST(postRequest({ feedback: `note ${i}` }, from("1.1.1.1")))
+
+      vi.stubGlobal("fetch", vi.fn().mockImplementation(async () => created()))
+      expect((await POST(postRequest({ feedback: "now it works" }, from("1.1.1.1")))).status).toBe(201)
+    })
   })
 })
 

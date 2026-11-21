@@ -20,6 +20,9 @@
 //      a cross-site or non-JSON post is refused with 403, and a filled-in
 //      honeypot is answered 201 with no issue filed. The browser's own
 //      requests above are the same-origin case that has to keep working.
+//   4. Limits: a body over 32 KB is refused with 413, and once one visitor
+//      has filed 3 notes in 10 minutes the 4th gets 429 and a toast saying
+//      how long to wait, with the draft kept.
 
 import http from "node:http"
 import path from "node:path"
@@ -100,6 +103,15 @@ const OFFLINE_SCENARIO = {
   offline: true,
   route: null,
   toast: ["Couldn't send feedback", "Couldn't reach Sequence's server. Check your connection; your note is still here."],
+}
+
+const RATE_LIMITED_SCENARIO = {
+  name: "too many notes from one visitor",
+  route: 429,
+  toast: [
+    "Couldn't send feedback",
+    "You've sent several notes in a short time. Your note is still here; please try again in 10 minutes.",
+  ],
 }
 
 const failures = []
@@ -223,6 +235,18 @@ try {
   )
   const honeypot = await post(sameOrigin, { feedback: "x", website: "https://spam.example" })
   check(honeypot === 201 && received.length === 0, `a filled honeypot gets ${honeypot} (want 201) and files nothing`)
+
+  const oversized = await post(sameOrigin, { feedback: "x".repeat(40_000) })
+  check(oversized === 413 && received.length === 0, `a 40 KB body gets ${oversized} (want 413) and files nothing`)
+
+  // The browser's 201 above already used one of this visitor's 3 slots; fill
+  // the rest, then the browser's next note must be turned away.
+  const statuses = []
+  for (let i = 0; i < 3 && statuses.at(-1) !== 429; i++) statuses.push(await post(sameOrigin, { feedback: `burst ${i}` }))
+  check(statuses.at(-1) === 429, `a burst from one visitor ends in 429 (got ${statuses.join(", ")})`)
+  received.length = 0
+  await submit(configured.url, RATE_LIMITED_SCENARIO)
+  check(received.length === 0, "a rate-limited note never reaches GitHub")
 } catch (error) {
   failures.push(error.message)
   console.error(`✗ ${error.message}`)

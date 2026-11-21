@@ -10,6 +10,7 @@ import {
   HONEYPOT_FIELD,
   type FeedbackContact,
 } from "@/lib/feedback-url"
+import { reserveFeedbackSlot, visitorKey } from "@/lib/feedback-rate-limit"
 
 /**
  * Files the feedback control's submission as a real GitHub issue, server
@@ -38,17 +39,25 @@ import {
  *   form post needs no CORS preflight, so the Content-Type check matters.
  * - A honeypot field the control hides from people (`HONEYPOT_FIELD`): a
  *   bot that fills it is told "sent" and nothing is filed.
- * - Rate limiting is a Vercel Firewall rule on this path, not code here (a
- *   serverless function has no shared memory to count in).
+ * - A request body over `MAX_BODY_BYTES` is refused before it is parsed.
+ * - Per-visitor and overall caps on filed issues (`reserveFeedbackSlot`),
+ *   counted in this instance's memory. The cross-instance limit is a Vercel
+ *   Firewall rate-limit rule on this path (README.md → "Feedback setup");
+ *   the in-memory count backs it up rather than replacing it.
  */
 export async function POST(request: Request) {
   if (!isSameOriginJson(request)) {
     return NextResponse.json({ error: "Feedback can only be sent from Sequence itself." }, { status: 403 })
   }
 
+  const declaredLength = Number(request.headers.get("content-length"))
+  if (declaredLength > MAX_BODY_BYTES) return tooLarge()
+
   let payload: unknown
   try {
-    payload = await request.json()
+    const raw = await request.text()
+    if (new TextEncoder().encode(raw).length > MAX_BODY_BYTES) return tooLarge()
+    payload = JSON.parse(raw)
   } catch {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 })
   }
@@ -103,6 +112,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: NOT_CONFIGURED_MESSAGE }, { status: 503 })
   }
 
+  const slot = reserveFeedbackSlot(visitorKey(request))
+  if (!slot.ok) {
+    return NextResponse.json(
+      { error: rateLimitedMessage(slot.retryAfterSeconds) },
+      { status: 429, headers: { "Retry-After": String(slot.retryAfterSeconds) } },
+    )
+  }
+
   let response: Response
   try {
     response = await fetch(`${githubApiUrl()}/repos/${GITHUB_REPO}/issues`, {
@@ -121,11 +138,13 @@ export async function POST(request: Request) {
       signal: AbortSignal.timeout(GITHUB_TIMEOUT_MS),
     })
   } catch (error) {
+    slot.release()
     console.error("[feedback] Network error reaching GitHub while filing feedback:", error)
     return NextResponse.json({ error: "Couldn't reach GitHub. Please try again in a moment." }, { status: 502 })
   }
 
   if (!response.ok) {
+    slot.release()
     const failure = describeGitHubFailure(response, await response.text())
     console.error(`[feedback] GitHub returned ${response.status}: ${failure.log}`)
     return NextResponse.json({ error: failure.message }, { status: failure.status })
@@ -138,6 +157,21 @@ export async function POST(request: Request) {
 }
 
 const GITHUB_TIMEOUT_MS = 10_000
+
+/** Far above any real note: 2,000 characters of feedback, a 254-character
+ *  email and JSON escaping come to well under 16 KB even in emoji. */
+const MAX_BODY_BYTES = 32 * 1024
+
+function tooLarge() {
+  return NextResponse.json({ error: "That request is too large to send." }, { status: 413 })
+}
+
+/** Told to the bookmaker, whose note stays in the popover. */
+function rateLimitedMessage(retryAfterSeconds: number): string {
+  const minutes = Math.ceil(retryAfterSeconds / 60)
+  const wait = minutes <= 1 ? "a minute" : minutes < 60 ? `${minutes} minutes` : "a few hours"
+  return `You've sent several notes in a short time. Your note is still here; please try again in ${wait}.`
+}
 
 /**
  * True for a JSON post from one of this server's own pages. Browsers send

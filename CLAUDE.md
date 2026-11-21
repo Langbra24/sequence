@@ -104,7 +104,8 @@ npm run e2e          # build, import fixture photos, export a PDF: padded to a m
 npm run verify:rename # build, rename the book via the top-left field, reload,
                      #   check persistence, shortcut isolation, export filename
 npm run verify:feedback # build, submit feedback through the real control and
-                     #   route against a stand-in GitHub; every status → toast
+                     #   route against a stand-in GitHub; every status → toast;
+                     #   a >32 KB body 413s, a 4th note in 10 min 429s
 npm run verify:text-selection # build with test hooks, place a text box with T;
                      #   single click selects, double click edits at the caret,
                      #   Enter edits with the caret at the end
