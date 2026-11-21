@@ -37,6 +37,12 @@ The bottom-left "Provide feedback" control files each submission as an issue on 
 3. **Deployed:** in the Vercel project, open Settings → Environment Variables. Add `GITHUB_FEEDBACK_TOKEN` for Production (and Preview if you want it there), with Sensitive turned on, then redeploy. Env changes only apply to new deployments.
 4. **Check it:** submit a note from the app. The issue should appear at https://github.com/Langbra24/sequence/issues. If it doesn't, the server log (`npm run dev` output, or Vercel → Logs) has a `[feedback]` line naming the step to fix.
 
+### Limits
+
+- In the app: 2,000 characters per note (with a counter) and 254 for the email.
+- In the route: bodies over 32 KB are refused; each visitor (by IP) may file 3 notes per 10 minutes and 10 per day, and the server files at most 30 per hour across everyone. Notes that fail to file don't count. A visitor over the limit sees "You've sent several notes in a short time…" with how long to wait, and keeps their draft.
+- Those counts live in the function instance's memory, so a cold start resets them. The hard limit is a Vercel Firewall rule. In the Vercel project: **Firewall → Configure → New Rule**. Name it `Feedback rate limit`; If **Request Path** **Equals** `/api/feedback`; Then **Rate Limit**, **Fixed Window**, **60 seconds**, **5 requests**, keyed by **IP Address**, action **Deny** (answers 429). Save, then **Review Changes → Publish**.
+
 `npm run verify:feedback` exercises every success and failure path against a local stand-in for GitHub. It never needs the real token.
 
 ## Repo layout
