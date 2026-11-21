@@ -2,8 +2,10 @@
 
 import { useEffect, useId, useRef, useState } from "react"
 
+import { InfoIcon } from "@phosphor-icons/react"
 import { PAGE_SIZE_PRESETS, validateCustomPageSize, type PageSize } from "@sequence/core"
 
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { useEditorStore } from "@/state/editor-store"
 
@@ -178,10 +180,16 @@ export function BookSetupDialog() {
             this is the moment work starts existing, so it's the moment the
             "only in this browser" caveat matters. 16px from the page-count
             row above and from the button below. */}
-        <p className="mt-4 text-sm text-pretty text-muted-foreground">
-          Your work is saved only in this browser on this computer. Clearing
-          your browser’s site data deletes it.
-        </p>
+        {/* role="note", not the default "alert": it's standing guidance,
+            not something that just happened, so it shouldn't interrupt a
+            screen reader the moment the dialog opens. */}
+        <Alert role="note" className="mt-4">
+          <InfoIcon />
+          <AlertDescription>
+            Your work is saved only in this browser on this computer. Clearing
+            your browser’s site data deletes it.
+          </AlertDescription>
+        </Alert>
 
         <Button className="mt-4 w-full" disabled={!canSubmit} onClick={handleSubmit}>
           Create book
